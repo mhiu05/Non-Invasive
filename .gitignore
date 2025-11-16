@@ -1,0 +1,5 @@
+.venv/
+__ptcache__/
+.vscode
+PreprocessedData/
+Data/

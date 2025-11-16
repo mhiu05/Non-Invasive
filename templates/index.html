@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-invasive Analysis For Health</title>
+    
+        
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="page-header">
+        <h1>Non-invasive Analysis For Health</h1>
+    </header>
+
+    <main class="page-container">
+        <div id="error-container" class="error-message" hidden></div>
+
+        <div class="upload-form-container">
+            <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                <div class="file-input" id="file-input-container">
+                    <input type="file" name="video" accept="video/*" required id="video-input">
+                    <span class="file-input-label" id="file-label">Choose Video File</span>
+                </div>
+                <button type="submit" class="upload-button" id="upload-button">
+                    Upload and Stream
+                </button>
+            </form>
+        </div>
+
+        <div class="data-container">
+            <div class="video-section card">
+                <h2>Processed Video Stream</h2>
+                <img id="video-stream" src="" alt="Video Stream">
+            </div>
+            
+            <div class="rgb-section card">
+                <h2>Signal Analysis</h2>
+                
+                <div class="vital-signs">
+                    <div class="vital-sign heart-rate" id="heart-rate">
+                        <span>Heart Rate</span>
+                        <strong>Detecting...</strong>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer">
+        <p>Non-Invasive Project for health</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>
