@@ -82,9 +82,14 @@ def load_yolo_detector():
     global YOLO_FACE_DETECTOR
     try:
         logger.info("Loading model YOLO5Face...")
-        device_str = str(DEVICE)  # Get the device name as a string
-        YOLO_FACE_DETECTOR = YOLO5Face(device=device_str)
-        logger.info(f"YOLO5 model successfully loaded! (Device: {device_str})")
+
+        if DEVICE.type == 'cuda':
+            device_id = "0"
+        else:
+            device_id = 'cpu'
+
+        YOLO_FACE_DETECTOR = YOLO5Face(device=device_id)
+        logger.info(f"YOLO5 model successfully loaded! (Device: {device_id})")
     except Exception as e:
         logger.error(f"Error loading YOLO5Face model: {e}")
 
