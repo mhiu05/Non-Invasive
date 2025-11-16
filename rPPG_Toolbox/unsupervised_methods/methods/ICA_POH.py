@@ -1,14 +1,9 @@
-"""ICA
-Non-contact, automated cardiac pulse measurements using video imaging and blind source separation.
-Poh, M. Z., McDuff, D. J., & Picard, R. W. (2010).
-Optics express, 18(10), 10762-10774. DOI: 10.1364/OE.18.010762
-"""
 import math
 
 import numpy as np
 from scipy import linalg
 from scipy import signal
-from unsupervised_methods import utils
+from rPPG_Toolbox.unsupervised_methods import utils
 
 
 def ICA_POH(frames, FS):

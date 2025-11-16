@@ -1,5 +1,3 @@
-# This file contains experimental modules
-
 import numpy as np
 import torch
 import torch.nn as nn

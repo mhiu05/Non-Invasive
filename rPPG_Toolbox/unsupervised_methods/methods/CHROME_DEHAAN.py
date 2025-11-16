@@ -1,15 +1,14 @@
-"""Unsupervised learning methods including POS, GREEN, CHROME, ICA, LGI and PBV."""
 import numpy as np
-from evaluation.post_process import *
-from unsupervised_methods.methods.CHROME_DEHAAN import *
-from unsupervised_methods.methods.GREEN import *
-from unsupervised_methods.methods.ICA_POH import *
-from unsupervised_methods.methods.LGI import *
-from unsupervised_methods.methods.PBV import *
-from unsupervised_methods.methods.POS_WANG import *
-from unsupervised_methods.methods.OMIT import *
+from rPPG_Toolbox.evaluation.post_process import *
+from rPPG_Toolbox.unsupervised_methods.methods.CHROME_DEHAAN import *
+from rPPG_Toolbox.unsupervised_methods.methods.GREEN import *
+from rPPG_Toolbox.unsupervised_methods.methods.ICA_POH import *
+from rPPG_Toolbox.unsupervised_methods.methods.LGI import *
+from rPPG_Toolbox.unsupervised_methods.methods.PBV import *
+from rPPG_Toolbox.unsupervised_methods.methods.POS_WANG import *
+from rPPG_Toolbox.unsupervised_methods.methods.OMIT import *
 from tqdm import tqdm
-from evaluation.BlandAltmanPy import BlandAltman
+from rPPG_Toolbox.evaluation.BlandAltmanPy import BlandAltman
 
 def unsupervised_predict(config, data_loader, method_name):
     """ Model evaluation on the testing dataset."""

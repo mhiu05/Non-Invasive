@@ -1,14 +1,8 @@
-"""POS
-Wang, W., den Brinker, A. C., Stuijk, S., & de Haan, G. (2017). 
-Algorithmic principles of remote PPG. 
-IEEE Transactions on Biomedical Engineering, 64(7), 1479-1491. 
-"""
-
 import math
 
 import numpy as np
 from scipy import signal
-from unsupervised_methods import utils
+from rPPG_Toolbox.unsupervised_methods import utils
 
 
 def _process_video(frames):

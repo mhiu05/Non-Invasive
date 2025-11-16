@@ -8,7 +8,7 @@ from multiprocessing import Pool, Process, Value, Array, Manager
 
 import cv2
 import numpy as np
-from dataset.data_loader.BaseLoader import BaseLoader
+from rPPG_Toolbox.dataset.data_loader.BaseLoader import BaseLoader
 from tqdm import tqdm
 
 
@@ -42,7 +42,7 @@ class UBFCrPPGLoader(BaseLoader):
         """Returns data directories under the path(For UBFC-rPPG dataset)."""
         data_dirs = glob.glob(data_path + os.sep + "subject*")
         if not data_dirs:
-            raise ValueError(self.dataset_name + " data paths empty!")
+            raise ValueError("data paths empty!")
         dirs = [{"index": re.search(
             'subject(\d+)', data_dir).group(0), "path": data_dir} for data_dir in data_dirs]
         return dirs

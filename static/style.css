@@ -1,46 +1,52 @@
-/* --- Biến Toàn Cục (CSS Variables) --- */
 :root {
-    --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --color-primary: #007bff;
-    --color-primary-dark: #0056b3;
-    --color-danger: #dc3545;
-    --color-success: #28a745;
-    --color-text: #212529;
-    --color-text-light: #6c757d;
-    --color-bg: #f4f7f6; 
-    --color-bg-card: #ffffff;
-    --color-border: #dee2e6;
-    
-    /* Màu Gradient cho Heart Rate */
-    --metric-heart-bg: #ff6b6b;
-    --metric-heart-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8a8a 100%);
-    --metric-heart-active: linear-gradient(135deg, #28a745 0%, #2de840 100%); /* Màu xanh khi active */
-    
-    /* --- ĐÃ XÓA: Biến --metric-r, --metric-g, --metric-b --- */
+    /* --- Global Variables (CSS Custom Properties) --- */
+    /* Defines values (colors, fonts, spacing) 
+       to be reused throughout the website. */
 
-    --border-radius: 12px; 
-    --box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
-    --spacing-md: 16px;
-    --spacing-lg: 24px; 
+    /* System font stack */
+    --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    
+    /* Color Palette */
+    --color-primary: #007bff; /* Primary color (blue) */
+    --color-primary-dark: #0056b3; /* Darker primary color */
+    --color-danger: #dc3545; /* Red (for errors) */
+    --color-success: #28a745; /* Green (for success) */
+    --color-text: #212529; /* Main text color */
+    --color-text-light: #6c757d; /* Light text color (secondary) */
+    --color-bg: #f4f7f6; /* Main page background color */
+    --color-bg-card: #ffffff; /* Background color for cards */
+    --color-border: #dee2e6; /* Border color */
+    
+    /* Special color variables for the heart rate metric */
+    --metric-heart-bg: #ff6b6b; /* Default background (red) */
+    --metric-heart-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8a8a 100%); /* (Not used in this code) */
+    --metric-heart-active: linear-gradient(135deg, #28a745 0%, #2de840 100%); /* Background when 'active' (green) */
+    
+    /* Sizing and Effect Variables */
+    --border-radius: 12px; /* General border radius */
+    --box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07); /* General box shadow */
+    --spacing-md: 16px; /* Medium spacing */
+    --spacing-lg: 24px; /* Large spacing */
 }
 
-/* --- Thiết lập Cơ bản --- */
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    /* --- Global CSS Reset --- */
+    box-sizing: border-box; /* Changes size calculation: width/height includes padding and border */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
 }
 
 html {
-    font-size: 16px;
-    scroll-behavior: smooth;
+    font-size: 16px; /* Set the root font size (supports 'rem' units) */
+    scroll-behavior: smooth; /* Smooth scrolling effect for anchor links */
 }
 
 body {
-    font-family: var(--font-family);
-    background-color: var(--color-bg);
-    color: var(--color-text);
-    line-height: 1.6;
+    /* --- Basic Font and Background Styles --- */
+    font-family: var(--font-family); /* Apply the defined font stack */
+    background-color: var(--color-bg); /* Apply the background color */
+    color: var(--color-text); /* Apply the text color */
+    line-height: 1.6; /* Line height (for better readability) */
 }
 
 h1, h2 {
@@ -53,22 +59,26 @@ h2 {
     color: var(--color-text);
 }
 
-/* --- Cấu trúc Trang --- */
+/* --- Page Layout Structure --- */
+
 .page-header {
+    /* Styles for the top header bar */
     background: var(--color-bg-card);
     padding: var(--spacing-md) var(--spacing-lg);
     text-align: center;
     border-bottom: 1px solid var(--color-border);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Light shadow */
 }
 
 .page-container {
+    /* Main "container", limits width and centers content */
     max-width: 1400px;
-    margin: var(--spacing-lg) auto;
+    margin: var(--spacing-lg) auto; /* Automatically centers horizontally */
     padding: 0 var(--spacing-lg);
 }
 
 .page-footer {
+    /* Styles for the footer */
     text-align: center;
     padding: var(--spacing-lg);
     margin-top: var(--spacing-lg);
@@ -77,8 +87,9 @@ h2 {
     border-top: 1px solid var(--color-border);
 }
 
-/* --- Thẻ Card Chung --- */
 .card {
+    /* --- General 'Card' Class --- */
+    /* Used for content blocks with a white background, rounded corners, and shadow */
     background: var(--color-bg-card);
     border-radius: var(--border-radius);
     padding: var(--spacing-lg);
@@ -86,8 +97,10 @@ h2 {
     margin-bottom: var(--spacing-lg);
 }
 
-/* --- Form Tải Lên --- */
+/* --- Upload Form --- */
+
 .upload-form-container {
+    /* (This class is used to override 'card' styles if needed) */
     border: none;
     box-shadow: none;
     background: none;
@@ -95,9 +108,10 @@ h2 {
 }
 
 .upload-form {
+    /* Uses Flexbox to arrange items (label, button) in a row */
     display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+    align-items: center; /* Centers items vertically */
+    gap: var(--spacing-md); /* Space between items */
     background: var(--color-bg-card);
     padding: var(--spacing-md);
     border-radius: var(--border-radius);
@@ -105,13 +119,16 @@ h2 {
 }
 
 .file-input {
-    flex-grow: 1;
-    position: relative;
+    flex-grow: 1; /* Allows it to grow and fill remaining space */
+    position: relative; /* Acts as an anchor for the (hidden) input[type="file"] */
 }
 
 .file-input input[type="file"] {
-    position: absolute;
-    opacity: 0;
+    /* --- Technique for "Hiding" the Original File Input --- */
+    /* The default file input is hard to style, so we hide it
+       and use the <label> (below) as a replacement. */
+    position: absolute; /* Overlays the label */
+    opacity: 0; /* Completely transparent (but still clickable) */
     width: 100%;
     height: 100%;
     cursor: pointer;
@@ -120,15 +137,18 @@ h2 {
 }
 
 .file-input-label {
+    /* --- This is the "Fake" Label the user sees --- */
     display: block;
     cursor: pointer;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
     padding: 12px var(--spacing-md);
-    transition: all 0.2s ease;
+    transition: all 0.2s ease; /* Transition for hover effect */
     color: var(--color-text-light);
     font-weight: 500;
+    
+    /* Prevent text wrapping (if filename is long) */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -136,19 +156,23 @@ h2 {
 }
 
 .file-input:hover .file-input-label {
+    /* Change color on hover */
     border-color: var(--color-primary);
     color: var(--color-primary);
 }
 
 .file-input.has-file .file-input-label {
+    /* Change color when a file is selected (this .has-file class is added by JS) */
     background: var(--color-primary);
     color: white;
     font-weight: 600;
     border-color: var(--color-primary);
 }
 
+/* --- Upload Button --- */
+
 .upload-button {
-    background: var(--color-success);
+    background: var(--color-success); /* Green color */
     color: white;
     border: none;
     padding: 12px 30px;
@@ -157,83 +181,94 @@ h2 {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    white-space: nowrap;
+    white-space: nowrap; /* Prevents the button from breaking line */
 }
 
 .upload-button:hover {
-    background: #218838;
-    transform: translateY(-2px);
+    background: #218838; /* Darker color on hover */
+    transform: translateY(-2px); /* "Lift" effect */
     box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
 }
 
 .upload-button:active {
-    transform: translateY(0);
+    transform: translateY(0); /* "Press down" effect */
 }
 
 .upload-button:disabled {
+    /* Style when the button is disabled (e.g., processing) */
     background: #ccc;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
 
-/* --- Vùng Hiển thị Dữ liệu --- */
+/* --- Data Layout (Video and Metrics) --- */
+
 .data-container {
     display: grid;
-    grid-template-columns: 2fr 1fr; /* Tỷ lệ 2:1 */
-    gap: var(--spacing-lg);
+    /* Create a 2-column layout:
+       Column 1 (video) takes 2 parts (2fr)
+       Column 2 (metrics) takes 1 part (1fr) */
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg); /* Space between columns */
 }
 
 #video-stream {
+    /* Style for the video display area (<img> tag) */
     width: 100%;
     max-width: 100%;
-    background: #000;
+    background: #000; /* Black background (shows before video loads) */
     border-radius: var(--border-radius);
-    min-height: 400px; 
+    min-height: 400px; /* Minimum height to maintain the frame */
     border: 1px solid var(--color-border);
 }
 
-/* --- Chỉ số Sức khỏe (ĐÃ SỬA) --- */
+/* --- Vital Signs Block (Heart Rate) --- */
+
 .vital-signs {
     display: grid;
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr; /* 1 column */
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
 }
 
 .vital-sign {
+    /* Style for the heart rate display card */
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius);
     text-align: center;
     color: white;
     font-weight: 600;
-    background: var(--metric-heart-bg); 
-    transition: background 0.5s ease;
+    background: var(--metric-heart-bg); /* Default red background (when not active) */
+    transition: background 0.5s ease; /* Smooth background color transition */
 }
 
 .vital-sign.active {
-    background: var(--metric-heart-active);
+    /* Style when heart rate is detected (added by JavaScript) */
+    background: var(--metric-heart-active); /* Change to green background */
 }
 
 .vital-sign span {
+    /* Style for the secondary text (e.g., "Heart Rate") */
     display: block;
-    font-size: 1rem; 
+    font-size: 1rem;
     opacity: 0.9;
     font-weight: 500;
 }
 
 .vital-sign strong {
+    /* Style for the heart rate number (e.g., "72 BPM") */
     display: block;
-    font-size: 2.25rem; 
+    font-size: 2.25rem; /* Large font size */
     margin-top: 5px;
     font-weight: 700;
     letter-spacing: 0.5px;
 }
 
-/* --- ĐÃ XÓA: .rgb-values, .chart-container, #rgbChart --- */
+/* --- Error Message --- */
 
-/* --- Thông báo Lỗi --- */
 .error-message {
+    /* Style for the error message (shown/hidden by JavaScript) */
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
@@ -244,26 +279,32 @@ h2 {
     font-weight: 600;
 }
 
-/* --- Responsive cho Điện thoại --- */
+/* --- Responsive (Adapting to small screens) --- */
+
 @media (max-width: 900px) {
+    /* Applies to screens 900px and below (e.g., tablets) */
     .data-container {
-        grid-template-columns: 1fr; 
+        /* Change the 2-column layout to a 1-column layout */
+        grid-template-columns: 1fr;
     }
     
     .upload-form {
+        /* Change the form from horizontal to vertical */
         flex-direction: column;
-        align-items: stretch;
+        align-items: stretch; /* Stretch items to be full-width */
     }
 }
 
 @media (max-width: 600px) {
+    /* Applies to screens 600px and below (e.g., phones) */
     body {
-        margin: 0;
+        margin: 0; /* Remove default body margin on mobile */
     }
     .page-container {
+        /* Remove large margins and padding */
         margin: 0;
         padding: var(--spacing-md);
     }
-    h1 { font-size: 1.5rem; }
+    h1 { font-size: 1.5rem; } /* Reduce heading font size */
     h2 { font-size: 1.25rem; }
 }

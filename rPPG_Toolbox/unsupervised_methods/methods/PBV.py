@@ -1,15 +1,9 @@
-"""PBV
-Improved motion robustness of remote-ppg by using the blood volume pulse signature.
-De Haan, G. & Van Leest, A.
-Physiol. measurement 35, 1913 (2014)
-"""
-
 import math
 
 import numpy as np
 from scipy import linalg
 from scipy import signal
-from unsupervised_methods import utils
+from rPPG_Toolbox.unsupervised_methods import utils
 
 
 def PBV(frames):

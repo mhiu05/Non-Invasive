@@ -1,4 +1,3 @@
-
 import csv
 import glob
 import os
@@ -6,8 +5,8 @@ import re
 from math import ceil
 from scipy import signal
 from scipy import sparse
-from unsupervised_methods.methods import POS_WANG
-from unsupervised_methods import utils
+from rPPG_Toolbox.unsupervised_methods.methods import POS_WANG
+from rPPG_Toolbox.unsupervised_methods import utils
 import math
 import multiprocessing as mp
 
@@ -61,7 +60,7 @@ class BaseLoader(Dataset):
         self.config_data = config_data
 
         if self.do_preprocess:
-            from dataset.data_loader.face_detector.YOLO5Face import YOLO5Face
+            from rPPG_Toolbox.dataset.data_loader.face_detector.YOLO5Face import YOLO5Face
             if 'Y5F' in self.config_data.PREPROCESS.CROP_FACE.BACKEND:
                 self.Y5FObj = YOLO5Face(self.config_data.PREPROCESS.CROP_FACE.BACKEND, device)
 

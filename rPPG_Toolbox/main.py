@@ -1,15 +1,13 @@
-""" The main function of rPPG deep learning pipeline."""
-
 import argparse
 import random
 import time
 
 import numpy as np
 import torch
-from config import get_config
-from dataset import data_loader
-from neural_methods import trainer
-from unsupervised_methods.unsupervised_predictor import unsupervised_predict
+from rPPG_Toolbox.config import get_config
+from rPPG_Toolbox.dataset import data_loader
+from rPPG_Toolbox.neural_methods import trainer
+from rPPG_Toolbox.unsupervised_methods.unsupervised_predictor import unsupervised_predict
 from torch.utils.data import DataLoader
 
 RANDOM_SEED = 100
@@ -38,7 +36,7 @@ def seed_worker(worker_id):
 def add_args(parser):
     """Adds arguments for parser."""
     parser.add_argument('--config_file', required=False,
-                        default="configs/infer_configs/PURE_UBFC-rPPG_DEEPPHYS_BASIC.yaml", 
+                        default="rPPG_Toolbox/configs/infer_configs/SCAMPS_UBFC-rPPG_DEEPPHYS_BASIC.yaml", 
                         type=str, 
                         help="The name of the model.")
     return parser
@@ -46,8 +44,26 @@ def add_args(parser):
 
 def train_and_test(config, data_loader_dict):
     """Trains the model."""
-    if config.MODEL.NAME == "DeepPhys":
+    if config.MODEL.NAME == "Physnet":
+        model_trainer = trainer.PhysnetTrainer.PhysnetTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "iBVPNet":
+        model_trainer = trainer.iBVPNetTrainer.iBVPNetTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "FactorizePhys":
+        model_trainer = trainer.FactorizePhysTrainer.FactorizePhysTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "Tscan":
+        model_trainer = trainer.TscanTrainer.TscanTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "EfficientPhys":
+        model_trainer = trainer.EfficientPhysTrainer.EfficientPhysTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'DeepPhys':
         model_trainer = trainer.DeepPhysTrainer.DeepPhysTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'BigSmall':
+        model_trainer = trainer.BigSmallTrainer.BigSmallTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'PhysFormer':
+        model_trainer = trainer.PhysFormerTrainer.PhysFormerTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'PhysMamba':
+        model_trainer = trainer.PhysMambaTrainer.PhysMambaTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'RhythmFormer':
+        model_trainer = trainer.RhythmFormerTrainer.RhythmFormerTrainer(config, data_loader_dict)
     else:
         raise ValueError('Your Model is Not Supported  Yet!')
     model_trainer.train(data_loader_dict)
@@ -56,8 +72,26 @@ def train_and_test(config, data_loader_dict):
 
 def test(config, data_loader_dict):
     """Tests the model."""
-    if config.MODEL.NAME == "DeepPhys":
+    if config.MODEL.NAME == "Physnet":
+        model_trainer = trainer.PhysnetTrainer.PhysnetTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "iBVPNet":
+        model_trainer = trainer.iBVPNetTrainer.iBVPNetTrainer(config, data_loader_dict)    
+    elif config.MODEL.NAME == "FactorizePhys":
+        model_trainer = trainer.FactorizePhysTrainer.FactorizePhysTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "Tscan":
+        model_trainer = trainer.TscanTrainer.TscanTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == "EfficientPhys":
+        model_trainer = trainer.EfficientPhysTrainer.EfficientPhysTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'DeepPhys':
         model_trainer = trainer.DeepPhysTrainer.DeepPhysTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'BigSmall':
+        model_trainer = trainer.BigSmallTrainer.BigSmallTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'PhysFormer':
+        model_trainer = trainer.PhysFormerTrainer.PhysFormerTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'PhysMamba':
+        model_trainer = trainer.PhysMambaTrainer.PhysMambaTrainer(config, data_loader_dict)
+    elif config.MODEL.NAME == 'RhythmFormer':
+        model_trainer = trainer.RhythmFormerTrainer.RhythmFormerTrainer(config, data_loader_dict)
     else:
         raise ValueError('Your Model is Not Supported  Yet!')
     model_trainer.test(data_loader_dict)
@@ -103,6 +137,26 @@ if __name__ == "__main__":
         # train_loader
         if config.TRAIN.DATA.DATASET == "UBFC-rPPG":
             train_loader = data_loader.UBFCrPPGLoader.UBFCrPPGLoader
+        elif config.TRAIN.DATA.DATASET == "PURE":
+            train_loader = data_loader.PURELoader.PURELoader
+        elif config.TRAIN.DATA.DATASET == "SCAMPS":
+            train_loader = data_loader.SCAMPSLoader.SCAMPSLoader
+        elif config.TRAIN.DATA.DATASET == "MMPD":
+            train_loader = data_loader.MMPDLoader.MMPDLoader
+        elif config.TRAIN.DATA.DATASET == "BP4DPlus":
+            train_loader = data_loader.BP4DPlusLoader.BP4DPlusLoader
+        elif config.TRAIN.DATA.DATASET == "BP4DPlusBigSmall":
+            train_loader = data_loader.BP4DPlusBigSmallLoader.BP4DPlusBigSmallLoader
+        elif config.TRAIN.DATA.DATASET == "UBFC-PHYS":
+            train_loader = data_loader.UBFCPHYSLoader.UBFCPHYSLoader
+        elif config.TRAIN.DATA.DATASET == "iBVP":
+            train_loader = data_loader.iBVPLoader.iBVPLoader
+        elif config.TRAIN.DATA.DATASET == "PhysDrive":
+            train_loader = data_loader.PhysDriveLoader.PhysDriveLoader
+        elif config.TRAIN.DATA.DATASET == "LADH":
+            train_loader = data_loader.LADHLoader.LADHLoader
+        elif config.TRAIN.DATA.DATASET == "SUMS":
+            train_loader = data_loader.SUMSLoader.SUMSLoader
         else:
             raise ValueError("Unsupported dataset!")
 
@@ -117,7 +171,7 @@ if __name__ == "__main__":
             
             data_loader_dict['train'] = DataLoader(
                 dataset=train_data_loader,
-                num_workers=16,
+                num_workers=2,
                 batch_size=config.TRAIN.BATCH_SIZE,
                 shuffle=True,
                 worker_init_fn=seed_worker,
@@ -129,11 +183,30 @@ if __name__ == "__main__":
         # valid_loader
         if config.VALID.DATA.DATASET == "UBFC-rPPG":
             valid_loader = data_loader.UBFCrPPGLoader.UBFCrPPGLoader
+        elif config.VALID.DATA.DATASET == "PURE":
+            valid_loader = data_loader.PURELoader.PURELoader
+        elif config.VALID.DATA.DATASET == "SCAMPS":
+            valid_loader = data_loader.SCAMPSLoader.SCAMPSLoader
+        elif config.VALID.DATA.DATASET == "MMPD":
+            valid_loader = data_loader.MMPDLoader.MMPDLoader
+        elif config.VALID.DATA.DATASET == "BP4DPlus":
+            valid_loader = data_loader.BP4DPlusLoader.BP4DPlusLoader
+        elif config.VALID.DATA.DATASET == "BP4DPlusBigSmall":
+            valid_loader = data_loader.BP4DPlusBigSmallLoader.BP4DPlusBigSmallLoader
+        elif config.VALID.DATA.DATASET == "UBFC-PHYS":
+            valid_loader = data_loader.UBFCPHYSLoader.UBFCPHYSLoader
+        elif config.VALID.DATA.DATASET == "iBVP":
+            valid_loader = data_loader.iBVPLoader.iBVPLoader
+        elif config.VALID.DATA.DATASET == "PhysDrive":
+            valid_loader = data_loader.PhysDriveLoader.PhysDriveLoader
+        elif config.VALID.DATA.DATASET == "LADH":
+            valid_loader = data_loader.LADHLoader.LADHLoader
+        elif config.VALID.DATA.DATASET == "SUMS":
+            valid_loader = data_loader.SUMSLoader.SUMSLoader
         elif config.VALID.DATA.DATASET is None and not config.TEST.USE_LAST_EPOCH:
             raise ValueError("Validation dataset not specified despite USE_LAST_EPOCH set to False!")
         else:
-            raise ValueError("Unsupported dataset! Currently supporting UBFC-rPPG, PURE, MMPD, \
-                             SCAMPS, BP4D+ (Normal and BigSmall preprocessing), UBFC-PHYS and iBVP")
+            raise ValueError("Unsupported dataset!")
         
         # Create and initialize the valid dataloader given the correct toolbox mode,
         # a supported dataset name, and a valid dataset path
@@ -145,7 +218,7 @@ if __name__ == "__main__":
                 device=config.DEVICE)
             data_loader_dict["valid"] = DataLoader(
                 dataset=valid_data,
-                num_workers=16,
+                num_workers=2,
                 batch_size=config.TRAIN.BATCH_SIZE,  # batch size for val is the same as train
                 shuffle=False,
                 worker_init_fn=seed_worker,
@@ -158,9 +231,28 @@ if __name__ == "__main__":
         # test_loader
         if config.TEST.DATA.DATASET == "UBFC-rPPG":
             test_loader = data_loader.UBFCrPPGLoader.UBFCrPPGLoader
+        elif config.TEST.DATA.DATASET == "PURE":
+            test_loader = data_loader.PURELoader.PURELoader
+        elif config.TEST.DATA.DATASET == "SCAMPS":
+            test_loader = data_loader.SCAMPSLoader.SCAMPSLoader
+        elif config.TEST.DATA.DATASET == "MMPD":
+            test_loader = data_loader.MMPDLoader.MMPDLoader
+        elif config.TEST.DATA.DATASET == "BP4DPlus":
+            test_loader = data_loader.BP4DPlusLoader.BP4DPlusLoader
+        elif config.TEST.DATA.DATASET == "BP4DPlusBigSmall":
+            test_loader = data_loader.BP4DPlusBigSmallLoader.BP4DPlusBigSmallLoader
+        elif config.TEST.DATA.DATASET == "UBFC-PHYS":
+            test_loader = data_loader.UBFCPHYSLoader.UBFCPHYSLoader
+        elif config.TEST.DATA.DATASET == "iBVP":
+            test_loader = data_loader.iBVPLoader.iBVPLoader
+        elif config.TEST.DATA.DATASET == "PhysDrive":
+            test_loader = data_loader.PhysDriveLoader.PhysDriveLoader
+        elif config.TEST.DATA.DATASET == "LADH":
+            test_loader = data_loader.LADHLoader.LADHLoader
+        elif config.TEST.DATA.DATASET == "SUMS":
+            test_loader = data_loader.SUMSLoader.SUMSLoader
         else:
-            raise ValueError("Unsupported dataset! Currently supporting UBFC-rPPG, PURE, MMPD, \
-                             SCAMPS, BP4D+ (Normal and BigSmall preprocessing), UBFC-PHYS and iBVP.")
+            raise ValueError("Unsupported dataset!.")
         
         if config.TOOLBOX_MODE == "train_and_test" and config.TEST.USE_LAST_EPOCH:
             print("Testing uses last epoch, validation dataset is not required.", end='\n\n')   
@@ -183,7 +275,6 @@ if __name__ == "__main__":
             )
         else:
             data_loader_dict['test'] = None
-
     elif config.TOOLBOX_MODE == "unsupervised_method":
         # unsupervised method dataloader
         if config.UNSUPERVISED.DATA.DATASET == "UBFC-rPPG":
@@ -201,8 +292,7 @@ if __name__ == "__main__":
         elif config.UNSUPERVISED.DATA.DATASET == "iBVP":
             unsupervised_loader = data_loader.iBVPLoader.iBVPLoader
         else:
-            raise ValueError("Unsupported dataset! Currently supporting UBFC-rPPG, PURE, MMPD, \
-                             SCAMPS, BP4D+, UBFC-PHYS and iBVP.")
+            raise ValueError("Unsupported dataset!.")
         
         unsupervised_data = unsupervised_loader(
             name="unsupervised",
@@ -211,13 +301,12 @@ if __name__ == "__main__":
             device=config.DEVICE)
         data_loader_dict["unsupervised"] = DataLoader(
             dataset=unsupervised_data,
-            num_workers=16,
+            num_workers=2,
             batch_size=1,
             shuffle=False,
             worker_init_fn=seed_worker,
             generator=general_generator
         )
-
     else:
         raise ValueError("Unsupported toolbox_mode! Currently support train_and_test or only_test or unsupervised_method.")
 

@@ -1,5 +1,3 @@
-# PyTorch utils
-
 import logging
 import math
 import os

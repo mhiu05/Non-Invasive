@@ -1,106 +1,138 @@
-// --- Biến toàn cục và Hằng số ---
-// ĐÃ XÓA: let rgbChart;
-let eventSource;
-let isStreamActive = false;
-// ĐÃ XÓA: let updateCount;
-// ĐÃ XÓA: const maxDataPoints;
+/**
+ * @file B-COM.js
+ * Client-side script (browser) to handle video uploading,
+ * display the video stream, and receive heart rate data
+ * via Server-Sent Events (SSE).
+ */
 
-// --- Lấy các phần tử DOM ---
+// --- Global Variables ---
+
+/**
+ * Holds the EventSource object for the Server-Sent Events (SSE) connection.
+ * @type {EventSource | null}
+ */
+let eventSource;
+
+/**
+ * A boolean flag to track the status of the SSE stream.
+ * true if the stream is active, false otherwise.
+ * @type {boolean}
+ */
+let isStreamActive = false;
+
+// --- DOM Element References ---
 const uploadForm = document.getElementById("upload-form");
 const uploadButton = document.getElementById("upload-button");
 const videoInput = document.getElementById("video-input");
 const fileLabel = document.getElementById("file-label");
 const fileInputContainer = document.getElementById("file-input-container");
 const errorContainer = document.getElementById("error-container");
-const videoStream = document.getElementById("video-stream");
-const heartRateEl = document.getElementById("heart-rate").querySelector("strong");
+const videoStream = document.getElementById("video-stream"); // <img> tag for displaying the video stream
+const heartRateEl = document.getElementById("heart-rate").querySelector("strong"); // <strong> element for displaying HR
 
-// --- ĐÃ XÓA: Toàn bộ hàm initChart() ---
-
-// --- Hàm Xử lý Giao diện (UI) ---
-
+/**
+ * Displays an error message in the UI.
+ * @param {string} message - The error content to display.
+ */
 function showError(message) {
     errorContainer.textContent = message;
-    errorContainer.hidden = false;
+    errorContainer.hidden = false; // Make it visible
 }
 
+/**
+ * Hides and clears the content of the error message container.
+ */
 function hideError() {
     errorContainer.textContent = "";
-    errorContainer.hidden = true;
+    errorContainer.hidden = true; // Hide it
 }
 
+/**
+ * Updates the state of the upload button (e.g., loading).
+ * @param {boolean} isLoading - true if loading, false if complete.
+ */
 function setButtonLoading(isLoading) {
     if (isLoading) {
-        uploadButton.disabled = true;
-        uploadButton.textContent = 'Processing...';
+        uploadButton.disabled = true; // Disable the button
+        uploadButton.textContent = 'Processing...'; // Change the text
     } else {
-        uploadButton.disabled = false;
-        uploadButton.textContent = 'Upload and Stream';
+        uploadButton.disabled = false; // Re-enable the button
+        uploadButton.textContent = 'Upload and Stream'; // Restore original text
     }
 }
 
+/**
+ * Updates the file input label to show the name of the selected file.
+ */
 function updateFileInputLabel() {
     if (videoInput.files && videoInput.files[0]) {
+        // If a file is selected, show its name
         fileLabel.textContent = videoInput.files[0].name;
-        fileInputContainer.classList.add('has-file');
+        fileInputContainer.classList.add('has-file'); // Add class for styling (CSS)
     } else {
+        // Otherwise, show the default text
         fileLabel.textContent = 'Choose Video File';
         fileInputContainer.classList.remove('has-file');
     }
 }
 
-// Reset giao diện về trạng thái ban đầu
+/**
+ * Resets the user interface to its initial state.
+ * (e.g., when uploading a new video).
+ */
 function resetUI() {
-    heartRateEl.textContent = 'Detecting...';
-    heartRateEl.parentElement.classList.remove('active'); 
-    videoStream.src = ""; 
-    
-    // --- ĐÃ XÓA: Logic reset biểu đồ ---
+    heartRateEl.textContent = 'Detecting...'; // Reset heart rate text
+    heartRateEl.parentElement.classList.remove('active'); // Remove 'active' class (used for styling)
+    videoStream.src = ""; // Clear the old video source
 }
 
-// --- Hàm Xử lý Dữ liệu và Kết nối ---
-
 /**
- * Cập nhật giao diện với dữ liệu mới từ SSE
+ * Handles the heart rate data received from the SSE stream.
+ * @param {object} data - The data object parsed from JSON.
  */
 function handleDataUpdate(data) {
-    if (data.heartbeat) return; // Bỏ qua tin nhắn heartbeat
-    
-    // Cập nhật nhịp tim
+    // Ignore if this is a "keep-alive" message
+    if (data.heartbeat) return;
+
     if (data.heart_rate <= 0) {
+        // If the heart rate is invalid (e.g., 0), display "Detecting..."
         heartRateEl.textContent = "Detecting...";
         heartRateEl.parentElement.classList.remove('active');
     } else {
+        // If a valid heart rate is received, display it and add the 'active' class
         heartRateEl.textContent = `${data.heart_rate.toFixed(1)} BPM`;
-        heartRateEl.parentElement.classList.add('active'); // Thêm class 'active'
+        heartRateEl.parentElement.classList.add('active');
     }
-
-    // --- ĐÃ XÓA: Logic cập nhật biểu đồ ---
 }
 
-// Bắt đầu kết nối Server-Sent Events (SSE)
+/**
+ * Initializes and starts the Server-Sent Events (SSE) connection.
+ */
 function startSSEConnection() {
+    // Close any existing connection
     if (eventSource) {
         eventSource.close();
     }
-    
-    // SỬA ĐỔI: Tên route này phải khớp với video_routes.py
-    // File video_routes.py của bạn đang dùng tên 'rgb_stream' (dù tên cũ)
-    eventSource = new EventSource('/rgb_stream'); 
-    
+
+    // Create a new connection to the '/rgb_stream' endpoint
+    eventSource = new EventSource('/rgb_stream');
+
     eventSource.onopen = () => console.log('SSE connection opened');
-    
+
+    // Handle incoming messages
     eventSource.onmessage = (event) => {
         try {
-            const data = JSON.parse(event.data);
-            handleDataUpdate(data); // Đổi tên hàm
+            const data = JSON.parse(event.data); // Parse the JSON data
+            handleDataUpdate(data); // Update the UI
         } catch (error) {
             console.error('Error parsing SSE data:', error);
         }
     };
-    
+
+    // Handle connection errors
     eventSource.onerror = (error) => {
         console.error('SSE error:', error);
+        // Automatically try to reconnect after 3 seconds if the stream is still "active"
         setTimeout(() => {
             if (isStreamActive) {
                 console.log('Attempting to reconnect...');
@@ -108,28 +140,39 @@ function startSSEConnection() {
             }
         }, 3000);
     };
+
+    // Set the status flag to active
     isStreamActive = true;
 }
 
+/**
+ * Stops and closes the SSE connection.
+ */
 function stopSSEConnection() {
-    isStreamActive = false;
+    isStreamActive = false; // Set the flag to inactive
     if (eventSource) {
-        eventSource.close();
+        eventSource.close(); // Close the connection
         eventSource = null;
         console.log('SSE connection closed');
     }
 }
 
+/**
+ * Handles the form submission event (video upload).
+ * This is the main function that controls the workflow.
+ * @param {Event} e - The event object.
+ */
 async function handleFormSubmit(e) {
-    e.preventDefault(); 
-    hideError(); 
-    setButtonLoading(true);
-    stopSSEConnection(); 
-    resetUI();
+    e.preventDefault(); // Prevent the form from submitting traditionally
+    hideError(); // Hide any old errors
+    setButtonLoading(true); // Show the "Processing..." state
+    stopSSEConnection(); // Stop any old SSE stream
+    resetUI(); // Reset the UI
 
-    const formData = new FormData(uploadForm);
+    const formData = new FormData(uploadForm); // Get the form data (the video file)
 
     try {
+        // Step 1: Send the video to the server via the '/upload' endpoint
         const uploadResponse = await fetch("/upload", {
             method: "POST",
             body: formData
@@ -139,41 +182,49 @@ async function handleFormSubmit(e) {
             throw new Error(`Video upload failed: ${uploadResponse.statusText}`);
         }
 
-        // -----------------------------------------------------------------
-        // *** ĐÂY LÀ SỬA LỖI CHÍNH (FIX LỖI "NOT FOUND") ***
-        // Sửa đường dẫn từ "/set_variable" thành "/reset_state"
-        const resetResponse = await fetch("/reset_state", { 
-        // -----------------------------------------------------------------
+        // Step 2: Send a POST request to '/reset_state'
+        // This tells the backend to reset its processing state
+        // (e.g., clear buffers, set 'previous_frame' = None)
+        const resetResponse = await fetch("/reset_state", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ variable: "reset" })
+            body: JSON.stringify({ variable: "reset" }) // Send a simple JSON body
         });
 
         if (!resetResponse.ok) {
-            // Thông báo lỗi này sẽ hiển thị nếu bạn sửa sai tên, 
-            // ví dụ: 'Failed to reset variables: Not Found'
             throw new Error(`Failed to reset variables: ${resetResponse.statusText}`);
         }
 
+        // Step 3: Wait 0.5 seconds (500ms) to give the backend time
+        // to reset and prepare the new video.
         setTimeout(() => {
-            videoStream.src = "/video_feed?" + new Date().getTime(); 
+            // Set the <img> tag's source to the '/video_feed' endpoint
+            // Add a timestamp (new Date().getTime()) to "bust" the cache
+            // This ensures the browser always requests a new stream.
+            videoStream.src = "/video_feed?" + new Date().getTime();
+            
+            // Step 4: Start the SSE connection to receive heart rate data
             startSSEConnection();
-        }, 500); 
+        }, 500);
 
     } catch (err) {
         console.error(err);
-        // Đây chính là thông báo lỗi đỏ bạn thấy
         showError(`An error occurred: ${err.message}. Please try again.`);
     } finally {
-        setButtonLoading(false); 
+        // Whether successful or not, always re-enable the button
+        setButtonLoading(false);
     }
 }
 
-// --- Gắn các Event Listeners ---
+// --- Attach Event Listeners ---
+
+// When the HTML document is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // ĐÃ XÓA: initChart();
+    // Attach handleFormSubmit to the form's 'submit' event
     uploadForm.addEventListener("submit", handleFormSubmit);
+    // Attach updateFileInputLabel when the user selects a file
     videoInput.addEventListener('change', updateFileInputLabel);
 });
 
+// Stop the SSE connection when the user closes the tab or leaves the page
 window.addEventListener('beforeunload', stopSSEConnection);

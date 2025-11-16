@@ -5,10 +5,10 @@ from collections import OrderedDict
 import numpy as np
 import torch
 import torch.optim as optim
-from evaluation.metrics import calculate_metrics
-from neural_methods.loss.NegPearsonLoss import Neg_Pearson
-from neural_methods.model.DeepPhys import DeepPhys
-from neural_methods.trainer.BaseTrainer import BaseTrainer
+from rPPG_Toolbox.evaluation.metrics import calculate_metrics
+from rPPG_Toolbox.neural_methods.loss.NegPearsonLoss import Neg_Pearson
+from rPPG_Toolbox.neural_methods.model.DeepPhys import DeepPhys
+from rPPG_Toolbox.neural_methods.trainer.BaseTrainer import BaseTrainer
 from tqdm import tqdm
 
 

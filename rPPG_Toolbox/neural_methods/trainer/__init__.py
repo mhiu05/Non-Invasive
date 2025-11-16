@@ -1,2 +1,2 @@
-import neural_methods.trainer.BaseTrainer
-import neural_methods.trainer.DeepPhysTrainer
+from . import BaseTrainer
+from . import DeepPhysTrainer

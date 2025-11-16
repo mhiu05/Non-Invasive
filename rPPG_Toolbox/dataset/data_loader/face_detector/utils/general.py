@@ -1,5 +1,3 @@
-# General utils
-
 import glob
 import logging
 import math

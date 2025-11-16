@@ -1,12 +1,5 @@
-"""OMIT
-Face2PPG: An unsupervised pipeline for blood volume pulse extraction from faces.
-Álvarez Casado, C., & Bordallo López, M.
-IEEE Journal of Biomedical and Health Informatics.
-(2023).
-"""
-
 import numpy as np
-from unsupervised_methods import utils
+from rPPG_Toolbox.unsupervised_methods import utils
 
 
 def OMIT(frames):
