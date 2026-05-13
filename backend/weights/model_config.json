@@ -1,0 +1,7 @@
+{
+  "model": "DeepPhys",
+  "img_size": 72,
+  "chunk": 180,
+  "norm_type": "DiffNorm",
+  "fps": 30
+}
