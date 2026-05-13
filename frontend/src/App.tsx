@@ -1,0 +1,18 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Header } from '@/components/Header'
+import { Home } from '@/pages/Home'
+import { Upload } from '@/pages/Upload'
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <Header />
+        <Routes>
+          <Route path="/"       element={<Home />} />
+          <Route path="/upload" element={<Upload />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  )
+}
