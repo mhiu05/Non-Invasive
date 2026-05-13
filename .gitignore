@@ -1,6 +1,48 @@
-.venv/
+# ── Python ────────────────────────────────────────────────────────
 __pycache__/
-.vscode
+*.py[cod]
+*.egg-info/
+.Python
+
+# ── Môi trường ────────────────────────────────────────────────────
+.venv/
+.env
+!.env.example
+
+# ── Backend weights (file lớn) ────────────────────────────────────
+backend/weights/*.onnx
+backend/weights/*.pth
+backend/weights/*.pt
+!backend/weights/model_config.json
+
+# ── Frontend ──────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# ── rPPG data & kết quả ───────────────────────────────────────────
+data/
+raw_data/
 PreprocessedData/
-Data/
+preprocessed_data/
 runs/
+results/
+
+# ── Jupyter ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── IDE & OS ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Claude ────────────────────────────────────────────────────────
+.claude/
+CLAUDE.md
+
+# ── Misc ──────────────────────────────────────────────────────────
+*.log
+*.zip
+*.tar.gz
