@@ -10,16 +10,16 @@ __pycache__/
 !.env.example
 
 # ── Weights (file lớn — không track) ─────────────────────────────
-backend/weights/*.onnx
-backend/weights/*.pth
-backend/weights/*.pt
-backend/weights/*_meta.json
-!backend/weights/model_config.json
-rPPG/weights/*.onnx
-rPPG/weights/*.onnx.data
-rPPG/weights/*.pth
-rPPG/weights/*.pt
-rPPG/weights/*_meta.json
+# backend/weights/*.onnx
+# backend/weights/*.pth
+# backend/weights/*.pt
+# backend/weights/*_meta.json
+# !backend/weights/model_config.json
+# rPPG/weights/*.onnx
+# rPPG/weights/*.onnx.data
+# rPPG/weights/*.pth
+# rPPG/weights/*.pt
+# rPPG/weights/*_meta.json
 
 # ── Frontend ──────────────────────────────────────────────────────
 frontend/node_modules/
