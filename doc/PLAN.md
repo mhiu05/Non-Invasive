@@ -17,20 +17,8 @@
 
 ## 1. Model & Inference
 
-### 🔴 Đổi model mặc định sang FactorizePhys
-Backend hiện dùng **DeepPhys** (nhanh nhưng kém chính xác).  
-Theo benchmark, **FactorizePhys** cho MAE ~0.04 bpm ở điều kiện bình thường.
-
-```bash
-python export/export_onnx.py \
-  --model FactorizePhys \
-  --weights weights/PURE_FactorizePhys_FSAM_Res.pth \
-  --output  weights/PURE_FactorizePhys.onnx \
-  --img-size 72 --chunk 160 --validate
-```
-
 ### 🔴 Cho phép chọn model trên frontend
-Thêm dropdown chọn model (DeepPhys / FactorizePhys / PhysFormer) — backend load model theo request.
+Thêm dropdown chọn model (DeepPhys / FactorizePhys / PhysFormer/...) — backend load model theo request.
 
 ### 🟡 Bật GPU inference
 Cài `onnxruntime-gpu` và đổi `DEVICE=cuda:0` trong `.env` để tăng tốc inference ~3–5x.
