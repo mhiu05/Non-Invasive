@@ -1,5 +1,5 @@
 {
-  "model": "DeepPhys",
+  "model": "FactorizePhys",
   "img_size": 72,
   "chunk": 180,
   "norm_type": "DiffNorm",

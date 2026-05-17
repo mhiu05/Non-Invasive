@@ -1,8 +1,0 @@
-{
-  "model": "DeepPhys",
-  "weights": "weights/PURE_DeepPhys.pth",
-  "img_size": 72,
-  "chunk": 180,
-  "frame_depth": 10,
-  "opset": 17
-}
