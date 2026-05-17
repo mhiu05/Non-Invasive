@@ -40,6 +40,19 @@ class DeConvBlock3D(nn.Module):
     def forward(self, x):
         return self.deconv_block_3d(x)
 
+
+class ONNXAdaptiveMaxPool3d(nn.Module):
+    def __init__(self, frames):
+        super(ONNXAdaptiveMaxPool3d, self).__init__()
+        self.frames = frames
+
+    def forward(self, x):
+        B, C, T, H, W = x.shape
+        x = x.view(B, C, T, H * W)
+        x = torch.max(x, dim=-1)[0]
+        x = x.view(B, C, T, 1, 1)
+        return x
+
 # num_filters
 nf = [8, 16, 24, 40, 64]
 
@@ -121,17 +134,17 @@ class iBVPNet(nn.Module):
         self.ibvpnet = nn.Sequential(
             encoder_block(in_channels, debug),
             decoder_block(debug),
-            # spatial adaptive pooling
-            nn.AdaptiveMaxPool3d((frames, 1, 1)),
+            # spatial adaptive pooling (ONNX-friendly)
+            ONNXAdaptiveMaxPool3d(frames),
             nn.Conv3d(nf[2], 1, [1, 1, 1], stride=1, padding=0)
         )
 
         
     def forward(self, x): # [batch, Features=3, Temp=frames, Width=32, Height=32]
-        
         [batch, channel, length, width, height] = x.shape
 
-        x = torch.diff(x, dim=2)
+        # Avoid torch.diff for ONNX compatibility; use explicit slice subtraction.
+        x = x[:, :, 1:] - x[:, :, :-1]
 
         if self.debug:
             print("Input.shape", x.shape)
@@ -162,9 +175,8 @@ class iBVPNet(nn.Module):
         feats = self.ibvpnet(x)
         if self.debug:
             print("feats.shape", feats.shape)
-        rPPG = feats.view(-1, length-1)
+        rPPG = feats.view(feats.size(0), -1)
         return rPPG
-    
 
 if __name__ == "__main__":
     import torch

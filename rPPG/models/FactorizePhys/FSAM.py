@@ -519,7 +519,8 @@ class FeaturesFactorizationModule(nn.Module):
     def forward(self, x):
         x = self.pre_conv_block(x)
         att = self.md_block(x)
-        dist = torch.dist(x, att)
+        diff = x - att
+        dist = torch.sqrt(torch.sum(diff * diff))
         att = self.post_conv_block(att)
 
         return att, dist

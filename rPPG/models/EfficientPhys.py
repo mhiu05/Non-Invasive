@@ -94,7 +94,9 @@ class EfficientPhys(nn.Module):
         self.channel = channel
 
     def forward(self, inputs, params=None):
-        inputs = torch.diff(inputs, dim=0)
+        # torch.diff is not exportable to ONNX in older PyTorch/ONNX versions.
+        # Use explicit slice subtraction so it can be traced and exported.
+        inputs = inputs[1:] - inputs[:-1]
         inputs = self.batch_norm(inputs)
 
         network_input = self.TSM_1(inputs)

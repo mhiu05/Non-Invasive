@@ -14,13 +14,36 @@ import json
 import os
 import sys
 
-# Thêm thư mục gốc rPPG/ vào sys.path để import được models/
 RPPG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if RPPG_ROOT not in sys.path:
     sys.path.insert(0, RPPG_ROOT)
 
 import torch
 import torch.onnx
+
+
+class BigSmallONNXWrapper(torch.nn.Module):
+    def __init__(self, model):
+        super(BigSmallONNXWrapper, self).__init__()
+        self.model = model
+
+    def forward(self, big_input, small_input):
+        return self.model((big_input, small_input))
+
+
+class PhysFormerONNXWrapper(torch.nn.Module):
+    def __init__(self, model, gra_sharp: float = 1.0):
+        super(PhysFormerONNXWrapper, self).__init__()
+        self.model = model
+        self.gra_sharp = gra_sharp
+
+    def forward(self, video_clip):
+        # Call .forward() directly to pass gra_sharp as a Python constant;
+        # using self.model(...) would lose the float arg during ONNX tracing.
+        output = self.model.forward(video_clip, self.gra_sharp)
+        if isinstance(output, tuple):
+            return output[0]
+        return output
 
 
 # ---------------------------------------------------------------------------
@@ -62,12 +85,17 @@ def build_model(model_name: str, args):
 
     elif name == "physformer":
         from models.PhysFormer import ViT_ST_ST_Compact3_TDC_gra_sharp
+        # PhysFormer requires img_size=128 (so stem+patch output is 4×4 spatial)
+        # and chunk=160 (standard training length); override any CLI values.
+        pf_chunk = 160
+        pf_img   = 128
         model = ViT_ST_ST_Compact3_TDC_gra_sharp(
-            image_size=(args.chunk, args.img_size, args.img_size),
+            image_size=(pf_chunk, pf_img, pf_img),
             patches=(4, 4, 4), dim=96, ff_dim=144, num_heads=4,
             num_layers=12, dropout_rate=0.2, theta=0.7,
         )
-        dummy = torch.zeros(1, 3, args.chunk, args.img_size, args.img_size)
+        model = PhysFormerONNXWrapper(model, gra_sharp=1.0)
+        dummy = torch.zeros(1, 3, pf_chunk, pf_img, pf_img)
         input_names = ["video_clip"]
         dynamic = {"video_clip": {0: "batch"}, "output": {0: "batch"}}
 
@@ -88,6 +116,7 @@ def build_model(model_name: str, args):
     elif name == "bigsmall":
         from models.BigSmall import BigSmall
         model = BigSmall(n_segment=args.chunk)
+        model = BigSmallONNXWrapper(model)
         dummy_big   = torch.zeros(args.chunk, 3, 144, 144)
         dummy_small = torch.zeros(args.chunk, 3,   9,   9)
         dummy = (dummy_big, dummy_small)
@@ -147,7 +176,7 @@ def export(args):
             model,
             dummy,
             args.output,
-            opset_version=17,
+            opset_version=18,
             input_names=input_names,
             output_names=["output"],
             dynamic_axes=dynamic_axes,
@@ -163,7 +192,7 @@ def export(args):
         "img_size":   args.img_size,
         "chunk":      args.chunk,
         "frame_depth": args.frame_depth,
-        "opset":      17,
+        "opset":      18,
     }
     meta_path = args.output.replace(".onnx", "_meta.json")
     with open(meta_path, "w") as f:

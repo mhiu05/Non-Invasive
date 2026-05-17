@@ -7,7 +7,23 @@ from torch import nn, Tensor, LongTensor
 from torch.nn import functional as F
 import math
 from typing import Tuple, Union
-from timm.models.layers import trunc_normal_, DropPath
+import torch.nn.init as _init
+
+def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
+    return _init.trunc_normal_(tensor, mean=mean, std=std, a=a, b=b)
+
+class DropPath(torch.nn.Module):
+    """Drop paths (stochastic depth) per sample during training."""
+    def __init__(self, drop_prob=0.):
+        super().__init__()
+        self.drop_prob = drop_prob
+    def forward(self, x):
+        if self.drop_prob == 0. or not self.training:
+            return x
+        keep_prob = 1 - self.drop_prob
+        shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+        random_tensor = torch.rand(shape, dtype=x.dtype, device=x.device).floor_(keep_prob)
+        return x * random_tensor / keep_prob
 
 
 
