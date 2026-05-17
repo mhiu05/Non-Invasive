@@ -5,7 +5,7 @@ __pycache__/
 .Python
 
 # ── Môi trường ────────────────────────────────────────────────────
-# .venv/
+.venv/
 # .env
 # !.env.example
 
