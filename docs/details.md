@@ -21,11 +21,14 @@ Chứa các React components tái sử dụng:
 - **BVPChart.tsx** - Biểu đồ hiển thị dữ liệu Blood Volume Pulse
 - **FaceOverlay.tsx** - Overlay để vẽ bounding box khuôn mặt lên video
 - **ChatBot.tsx** - Widget chatbot AI (floating button + modal chat)
+- **HistoryView.tsx** - Component xem và lọc lịch sử đo (dùng chung)
+- **SnrBadge.tsx** - Component hiển thị nhãn chất lượng tín hiệu (SNR)
 
 ### Pages (`src/pages/`)
 Chứa các trang chính:
-- **Home.tsx** - Trang realtime, dùng webcam và WebSocket để nhận vitals live.
-- **Upload.tsx** - Trang upload video offline và xem lịch sử phiên đo.
+- **Home.tsx** - Trang Landing Page giải thích tính năng và hướng dẫn sử dụng.
+- **Live.tsx** - Trang realtime, dùng webcam và WebSocket để nhận vitals live.
+- **Upload.tsx** - Trang upload video offline để hệ thống phân tích bất đồng bộ.
 
 ### Store (`src/store/`)
 - **vitalsStore.ts** - Zustand store chứa dữ liệu chỉ số sức khỏe real-time
@@ -123,19 +126,20 @@ Endpoints API:
 
 ## Tóm Tắt Flow
 
-### Upload Video Flow:
+### Upload Video Flow (Async):
 1. User tải video lên từ **Upload.tsx** (Frontend)
-2. Gửi file đến **video.py** endpoint via **api.ts**
-3. Backend xử lý: **face_detector.py** → **rppg_engine.py** → **signal_processor.py**
-4. Kết quả trả về qua HTTP response
-5. Frontend hiển thị kết quả (VitalSignCard, BVPChart)
-6. Record được lưu vào **history.db** qua **history_store.py**
+2. Gửi file đến `POST /video/upload-async` qua **api.ts**
+3. Backend tạo background task và trả về `job_id`
+4. Frontend polling `GET /video/jobs/{job_id}` mỗi 2 giây
+5. Background task: **face_detector.py** → **rppg_engine.py** → **signal_processor.py** → lưu vào **history.db**
+6. Frontend nhận kết quả 'done' và hiển thị (VitalSignCard, BVPChart)
 
 ### Real-time Webcam Flow:
-1. **useWebcam.ts** capture frames từ webcam
+1. **useWebcam.ts** capture frames từ webcam (trong trang **Live.tsx**)
 2. Gửi frames đến backend WebSocket via **useWebSocket.ts**
 3. Backend xử lý real-time, gửi kết quả trở lại via **stream.py**
-4. Frontend hiển thị kết quả real-time trong **Home.tsx**
+4. Frontend hiển thị kết quả real-time trong **Live.tsx**
+5. Khi ngắt kết nối (> 5 giây đo), record tự động được lưu vào **history.db**
 
 ### Chatbot Flow:
 1. User click floating chat button → mở **ChatBot.tsx**

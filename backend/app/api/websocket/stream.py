@@ -45,6 +45,11 @@ async def websocket_stream(ws: WebSocket):
         await ws.close()
         return
 
+    import uuid
+    session_id = str(uuid.uuid4())[:8]
+    frame_count = 0
+    last_vitals = None
+
     sess = SessionState(state.engine, fps=settings.fps)
     blink = BlinkDetector(
         fps=settings.fps,
@@ -117,6 +122,8 @@ async def websocket_stream(ws: WebSocket):
             if isinstance(msg.get('age'), int) and msg['age'] >= 0:
                 sess.age = msg['age']
 
+            frame_count += 1
+
             await ws.send_text(json.dumps({
                 "type": "face",
                 "detected": True,
@@ -144,12 +151,11 @@ async def websocket_stream(ws: WebSocket):
                     high_hz,
                 )
                 hrv = await loop.run_in_executor(None, compute_hrv, sig, settings.fps)
-                await ws.send_text(json.dumps({
-                    "type": "vitals",
+                
+                last_vitals = {
                     "heart_rate": round(hr, 1),
                     "blink_rate": round(blink.get_rate(), 1),
                     "snr_db": round(snr, 2),
-                    "bvp_window": [round(float(v), 4) for v in bvp_buf.tolist()],
                     "age": sess.age,
                     "age_group": get_age_group(sess.age),
                     "bandpass_low_hz": low_hz,
@@ -159,6 +165,12 @@ async def websocket_stream(ws: WebSocket):
                     "rmssd_ms": round(hrv["rmssd_ms"], 2),
                     "pnn50": round(hrv["pnn50"], 2),
                     "peak_count": hrv["peak_count"],
+                }
+
+                await ws.send_text(json.dumps({
+                    "type": "vitals",
+                    **last_vitals,
+                    "bvp_window": [round(float(v), 4) for v in bvp_buf.tolist()],
                 }))
             else:
                 # Send progress while buffer is filling up
@@ -183,3 +195,20 @@ async def websocket_stream(ws: WebSocket):
         except Exception as exc:
             # Lỗi xử lý frame — log nhưng KHÔNG đóng connection
             logger.exception("Frame processing error (skipping): %s", exc)
+
+    # Save to history when session ends
+    if last_vitals and last_vitals.get("heart_rate") is not None:
+        duration = frame_count / settings.fps
+        if duration >= 5.0:  # Only save meaningful sessions
+            try:
+                from app.services.history_store import save_history_record
+                record = {
+                    "type": "realtime",
+                    "session_id": f"ws-{session_id}",
+                    "duration_sec": round(duration, 1),
+                    **last_vitals
+                }
+                save_history_record(record)
+                logger.info("Saved realtime session %s to history (duration: %.1fs)", session_id, duration)
+            except Exception as e:
+                logger.error("Failed to save realtime history: %s", e)

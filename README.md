@@ -76,9 +76,37 @@ Non-Invasive/
 └── README.md
 ```
 
+## 🧠 Các công nghệ AI/ML & Web sử dụng
+
+Dự án áp dụng nhiều kỹ thuật tiên tiến trong Deep Learning, Computer Vision và Generative AI:
+
+### 1. Trí tuệ nhân tạo (AI/DL) trong Computer Vision
+- **MediaPipe Face Mesh (Google):** Trích xuất tọa độ khuôn mặt mật độ cao (468 landmarks) theo thời gian thực để xác định chính xác các Vùng quan tâm (Region of Interest - ROI) (như trán, má) nơi có nhiều vi mạch máu biểu bì.
+- **Deep Learning Models (rPPG):** Sử dụng các kiến trúc mạng nơ-ron chuyên dụng để trích xuất tín hiệu khối lượng máu (Blood Volume Pulse - BVP) từ chuỗi khung hình:
+  - **CNN-based:** DeepPhys (Spatial-Temporal 2D CNN), PhysNet (3D CNN).
+  - **Transformer-based (ViT):** PhysFormer, RhythmFormer (sử dụng self-attention để mô hình hóa chuỗi thời gian xa).
+  - **Efficient Networks:** TSCAN, EfficientPhys.
+- **Inference Engine:** Tối ưu hóa triển khai mô hình với **ONNX Runtime** giúp giảm độ trễ, tăng FPS khi chạy trên CPU/Edge devices. Hỗ trợ **PyTorch fallback** cho các mô hình chưa thể convert (như PhysMamba).
+
+### 2. Xử lý tín hiệu số (Digital Signal Processing)
+- **Fast Fourier Transform (FFT):** Phân tích tín hiệu BVP từ miền thời gian sang miền tần số để tìm đỉnh tần số vượt trội (chính là Nhịp tim).
+- **Butterworth Bandpass Filter:** Lọc nhiễu tín hiệu động học dựa trên dải nhịp tim chuẩn theo từng nhóm tuổi (ví dụ: trẻ sơ sinh 1.6-3.3 Hz, người lớn 0.7-3.0 Hz).
+- **Peak Detection (SciPy):** Phát hiện các đỉnh tâm thu (Systolic peaks) trên sóng BVP để tính toán các chỉ số Biến thiên nhịp tim (Heart Rate Variability - HRV) như RMSSD, SDNN, pNN50.
+
+### 3. Generative AI & NLP (RAG Pipeline)
+- **Large Language Model (LLM):** Sử dụng **Google Gemini 2.5 Flash** để tư vấn sức khỏe dựa trên kết quả rPPG.
+- **Retrieval-Augmented Generation (RAG):**
+  - **Embeddings:** `Google Generative AI Embeddings` để chuyển đổi tài liệu y khoa thành vector.
+  - **Vector Database:** `FAISS` (Facebook AI Similarity Search) để lưu trữ và truy xuất ngữ cảnh liên quan cực nhanh.
+  - **Orchestration:** `LangChain` kết nối Vector Store và LLM, tạo ra chuỗi (chain) hỏi đáp có độ chính xác cao, hạn chế hallucination.
+
+### 4. Web Development (Fullstack)
+- **Backend:** `FastAPI` (Python) siêu tốc, hỗ trợ xử lý luồng `WebSocket` bất đồng bộ (`asyncio`) và chạy các mô hình AI nặng trên `ThreadPoolExecutor` để không block event loop. Lưu trữ lịch sử với `SQLite`.
+- **Frontend:** `React 18` + `TypeScript`, build bằng `Vite`. Quản lý state bằng `Zustand`. Giao diện hiện đại với `Tailwind CSS`, hiển thị sóng realtime với `Recharts`.
+
 ---
 
-## Chạy hệ thống
+## 🚀 Chạy hệ thống
 
 ### Bước 1 — Chạy Backend
 
@@ -133,33 +161,39 @@ cd frontend && npm run dev
 
 ---
 
-## Hướng dẫn sử dụng
+## 📖 Hướng dẫn sử dụng
 
-### Live Analysis (webcam)
+### 1. Landing Page (Trang chủ)
+- Truy cập `http://localhost:3002/`.
+- Xem giải thích các chỉ số sức khỏe, hướng dẫn các bước thiết lập ánh sáng/camera và chọn chức năng đo.
 
-1. Mở `http://localhost:3002`
-2. Click **Start Camera** — trình duyệt hỏi quyền camera
-3. Nhìn thẳng vào webcam, đủ ánh sáng
+### 2. Live Analysis (Đo qua Webcam)
+
+1. Chuyển sang tab **Live** (`/live`).
+2. Click **Start Camera** — trình duyệt hỏi quyền camera.
+3. Nhìn thẳng vào webcam, đủ ánh sáng.
 4. Sau ~12 giây (180 frames @ 15fps), kết quả xuất hiện:
    - **Heart Rate** — nhịp tim (BPM)
    - **Blink Rate** — tốc độ chớp mắt (lần/phút)
-   - **Signal SNR** — chất lượng tín hiệu (dB), > 5 dB là tốt
+   - **Signal SNR** — chất lượng tín hiệu (dB), > 2 dB là tốt
    - **BVP chart** — dạng sóng mạch máu real-time
-5. Click **Stop** để dừng
+5. Click **Stop** để dừng. Phiên đo (nếu > 5s) sẽ tự động lưu vào Lịch sử.
+6. Nhấp **Xem lịch sử** ở góc trên để đối chiếu.
 
 > Ngồi thẳng, không cử động đầu. Ánh sáng từ phía trước, không ngược sáng.
 
-### Upload video offline
+### 3. Upload video offline (Async Processing)
 
-1. Chuyển sang tab **Upload**
-2. Kéo thả file video (MP4, AVI, MOV) hoặc click chọn file
-3. Chờ xử lý → kết quả hiện ngay
+1. Chuyển sang tab **Upload** (`/upload`).
+2. Kéo thả file video (MP4, AVI, MOV) hoặc click chọn file.
+3. Hệ thống trả về `job_id` và tự động polling lấy trạng thái. Có thể đóng trình duyệt và mở lại lịch sử xem sau.
+4. Quản lý lịch sử phân tích với tính năng lọc (Filter) theo thời gian/loại.
 
-### AI Chatbot
+### 4. AI Chatbot
 
-- Click nút chat ở góc phải màn hình (hiện trên mọi trang)
-- Hỏi về kết quả đo sức khỏe, kiến trúc hệ thống, hoặc ý nghĩa các chỉ số
-- Chatbot sử dụng RAG từ tài liệu trong `backend/app/documents/`
+- Click nút chat ở góc phải màn hình (hiện trên mọi trang).
+- Hỏi về kết quả đo sức khỏe, kiến trúc hệ thống, hoặc ý nghĩa các chỉ số.
+- Chatbot sử dụng RAG từ tài liệu trong `backend/app/documents/`.
 
 > ⚠️ Thông tin sức khỏe từ chatbot chỉ mang tính tham khảo, không thay thế bác sĩ.
 

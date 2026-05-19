@@ -99,9 +99,9 @@ export type SnrQuality = 'excellent' | 'good' | 'fair' | 'poor'
 
 export function getSnrQuality(snr: number | null | undefined): SnrQuality {
   if (snr == null) return 'poor'
-  if (snr >= 8) return 'excellent'
-  if (snr >= 5) return 'good'
-  if (snr >= 3) return 'fair'
+  if (snr >= 5) return 'excellent'
+  if (snr >= 2) return 'good'
+  if (snr >= 0) return 'fair'
   return 'poor'
 }
 

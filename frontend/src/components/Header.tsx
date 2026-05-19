@@ -1,4 +1,4 @@
-import { Activity, Upload, Video } from 'lucide-react'
+import { Activity, Home, Upload, Video } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,7 @@ export function Header() {
       )}
     >
       {icon}
-      {label}
+      <span className="hidden sm:inline">{label}</span>
     </Link>
   )
 
@@ -30,7 +30,8 @@ export function Header() {
         </div>
 
         <nav className="flex items-center gap-1">
-          {navLink('/', <Video size={15} />, 'Live')}
+          {navLink('/', <Home size={15} />, 'Trang chủ')}
+          {navLink('/live', <Video size={15} />, 'Live')}
           {navLink('/upload', <Upload size={15} />, 'Upload')}
         </nav>
       </div>
