@@ -28,3 +28,21 @@ def build_deepphys_input(
     appearance = standardize(frame)                     # (H,W,3)
     combined = np.concatenate([motion, appearance], axis=2)  # (H,W,6)
     return combined.transpose(2, 0, 1)[np.newaxis].astype(np.float32)  # (1,6,H,W)
+
+
+def build_chunk_input(frames_bgr: list) -> np.ndarray:
+    """
+    FactorizePhys / chunk-based model input.
+    frames_bgr: list of (H, W, 3) BGR uint8, length = T+1  (e.g. 181)
+    Returns: (1, 3, T+1, H, W) float32  — RGB, normalized to [0, 1]
+    """
+    rgb_frames = []
+    for f in frames_bgr:
+        # BGR → RGB, normalize to [0, 1]
+        rgb = f[:, :, ::-1].astype(np.float32) / 255.0
+        rgb_frames.append(rgb)
+
+    # Stack: (T+1, H, W, 3) → transpose → (3, T+1, H, W)
+    arr = np.stack(rgb_frames, axis=0)          # (T+1, H, W, 3)
+    arr = arr.transpose(3, 0, 1, 2)             # (3, T+1, H, W)
+    return arr[np.newaxis].astype(np.float32)   # (1, 3, T+1, H, W)

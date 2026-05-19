@@ -1,16 +1,9 @@
-import { Activity, Moon, Sun, Upload, Video } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Activity, Upload, Video } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 export function Header() {
   const { pathname } = useLocation()
-  const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark')
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('theme', dark ? 'dark' : 'light')
-  }, [dark])
 
   const navLink = (to: string, icon: React.ReactNode, label: string) => (
     <Link
@@ -40,14 +33,6 @@ export function Header() {
           {navLink('/', <Video size={15} />, 'Live')}
           {navLink('/upload', <Upload size={15} />, 'Upload')}
         </nav>
-
-        <button
-          onClick={() => setDark((d) => !d)}
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-          aria-label="toggle dark mode"
-        >
-          {dark ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
       </div>
     </header>
   )

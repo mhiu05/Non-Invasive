@@ -23,5 +23,9 @@ class Settings(BaseSettings):
     # Upload
     max_upload_mb: int = 100
 
+    # Chatbot
+    gemini_api_key: str = ""
+    chatbot_model: str = "gemini-2.5-flash"
+
 
 settings = Settings()

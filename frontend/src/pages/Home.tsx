@@ -1,5 +1,5 @@
 import { Activity, Eye, Heart, Radio, StopCircle, Video } from 'lucide-react'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BVPChart } from '@/components/BVPChart'
 import { FaceOverlay } from '@/components/FaceOverlay'
 import { VitalSignCard } from '@/components/VitalSignCard'
@@ -8,10 +8,16 @@ import { useWebcam } from '@/hooks/useWebcam'
 import { useVitalsStore } from '@/store/vitalsStore'
 
 export function Home() {
-  const { heartRate, blinkRate, snrDb, bvpWindow, faceBbox, faceDetected, isConnected, reset } =
+  const { heartRate, blinkRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded, faceBbox, faceDetected, isConnected, reset } =
     useVitalsStore()
+  const [age, setAge] = useState<number | undefined>(undefined)
+  const [displayHeartRate, setDisplayHeartRate] = useState<number | null>(null)
+  const [displayBlinkRate, setDisplayBlinkRate] = useState<number | null>(null)
+  const [displaySnrDb, setDisplaySnrDb] = useState<number | null>(null)
+  const [displayHrvMs, setDisplayHrvMs] = useState<number | null>(null)
+  const ageRef = useCallback(() => (age != null && !Number.isNaN(age) ? age : null), [age])
 
-  const { connect, disconnect, sendFrame } = useWebSocket()
+  const { connect, disconnect, sendFrame } = useWebSocket(ageRef)
   const { videoRef, active, error, start, stop } = useWebcam(sendFrame)
 
   const handleStart = useCallback(async () => {
@@ -24,6 +30,107 @@ export function Home() {
     stop()
     disconnect()
   }, [stop, disconnect])
+
+  // Smooth numeric transitions for live vitals so the display updates more like a gauge.
+  const smoothingIntervalMs = 140
+  const smoothingFactor = 0.07
+  const smoothingThreshold = 0.25
+
+  useEffect(() => {
+    if (heartRate === null) {
+      setDisplayHeartRate(null)
+      return
+    }
+
+    let active = true
+    const step = () => {
+      setDisplayHeartRate((prev) => {
+        if (prev === null) return heartRate
+        const next = prev + (heartRate - prev) * smoothingFactor
+        if (Math.abs(next - heartRate) < smoothingThreshold) return heartRate
+        return next
+      })
+      if (active) {
+        window.setTimeout(step, smoothingIntervalMs)
+      }
+    }
+    step()
+    return () => {
+      active = false
+    }
+  }, [heartRate])
+
+  useEffect(() => {
+    if (blinkRate === null) {
+      setDisplayBlinkRate(null)
+      return
+    }
+
+    let active = true
+    const step = () => {
+      setDisplayBlinkRate((prev) => {
+        if (prev === null) return blinkRate
+        const next = prev + (blinkRate - prev) * smoothingFactor
+        if (Math.abs(next - blinkRate) < smoothingThreshold) return blinkRate
+        return next
+      })
+      if (active) {
+        window.setTimeout(step, smoothingIntervalMs)
+      }
+    }
+    step()
+    return () => {
+      active = false
+    }
+  }, [blinkRate])
+
+  useEffect(() => {
+    if (snrDb === null) {
+      setDisplaySnrDb(null)
+      return
+    }
+
+    let active = true
+    const step = () => {
+      setDisplaySnrDb((prev) => {
+        if (prev === null) return snrDb
+        const next = prev + (snrDb - prev) * smoothingFactor
+        if (Math.abs(next - snrDb) < smoothingThreshold) return snrDb
+        return next
+      })
+      if (active) {
+        window.setTimeout(step, smoothingIntervalMs)
+      }
+    }
+    step()
+    return () => {
+      active = false
+    }
+  }, [snrDb])
+
+  useEffect(() => {
+    if (hrvMs === null) {
+      setDisplayHrvMs(null)
+      return
+    }
+
+    let active = true
+    const step = () => {
+      setDisplayHrvMs((prev) => {
+        if (prev === null) return hrvMs
+        const next = prev + (hrvMs - prev) * smoothingFactor
+        if (Math.abs(next - hrvMs) < smoothingThreshold) return hrvMs
+        return next
+      })
+      if (active) {
+        window.setTimeout(step, smoothingIntervalMs)
+      }
+    }
+    step()
+    return () => {
+      active = false
+    }
+  }, [hrvMs])
 
   // Cleanup on unmount
   useEffect(() => () => { stop(); disconnect() }, [stop, disconnect])
@@ -63,6 +170,27 @@ export function Home() {
             </p>
           )}
 
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Tuổi người dùng
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={age ?? ''}
+              onChange={(event) => {
+                const raw = event.target.value
+                const value = raw === '' ? undefined : Number(raw)
+                setAge(value == null || Number.isNaN(value) ? undefined : value)
+              }}
+              placeholder="8"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20"
+            />
+            <p className="text-xs text-slate-400">
+              Nếu không nhập, mặc định dùng dải cho người lớn (≥ 8 tuổi).
+            </p>
+          </div>
+
           <div className="flex gap-3">
             {!active ? (
               <button
@@ -82,7 +210,11 @@ export function Home() {
           </div>
 
           <p className="text-xs text-slate-400">
-            Buffer: {bvpWindow.length} / 180 frames &nbsp;·&nbsp; Model needs ~6s to compute HR
+            {heartRate !== null
+              ? 'Monitoring live...'
+              : bufferNeeded > 0
+                ? `Buffer: ${bufferFrames} / ${bufferNeeded} frames · Model needs ~${Math.ceil(bufferNeeded / 30)}s`
+                : 'Warming up...'}
           </p>
         </div>
 
@@ -93,9 +225,10 @@ export function Home() {
           </h2>
 
           <div className="space-y-3">
-            <VitalSignCard icon={Heart}    label="Heart Rate"  value={heartRate}  unit="BPM"     color="red"    />
-            <VitalSignCard icon={Eye}      label="Blink Rate"  value={blinkRate}  unit="bl/min"  color="blue"   />
-            <VitalSignCard icon={Activity} label="Signal SNR"  value={snrDb}      unit="dB"      color="green"  />
+            <VitalSignCard icon={Heart}    label="Heart Rate"     value={displayHeartRate}  unit="BPM"     color="red"    />
+            <VitalSignCard icon={Eye}      label="Blink Rate"     value={displayBlinkRate}  unit="bl/min"  color="blue"   />
+            <VitalSignCard icon={Activity} label="Signal SNR"     value={displaySnrDb}      unit="dB"      color="green"  />
+            <VitalSignCard icon={Radio}    label="HRV (RMSSD)"    value={displayHrvMs}      unit="ms"      color="purple" />
           </div>
 
           <div className="space-y-2">

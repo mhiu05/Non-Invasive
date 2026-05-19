@@ -5,7 +5,7 @@ import type { WsMessage } from '@/types/vitals'
 const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8001/ws/stream'
 const RECONNECT_MS = 3000
 
-export function useWebSocket() {
+export function useWebSocket(getAge?: () => number | null) {
   const ws = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const shouldReconnect = useRef(false)
@@ -23,7 +23,15 @@ export function useWebSocket() {
     ws.current.onmessage = (e: MessageEvent) => {
       const msg = JSON.parse(e.data as string) as WsMessage
       if (msg.type === 'vitals') {
-        setVitals(msg.heart_rate, msg.blink_rate, msg.snr_db, msg.bvp_window)
+        setVitals(
+          msg.heart_rate,
+          msg.blink_rate,
+          msg.snr_db,
+          msg.hrv_ms ?? null,
+          msg.bvp_window,
+          msg.buffer_frames ?? msg.bvp_window.length,
+          msg.buffer_needed ?? 181,
+        )
       } else if (msg.type === 'face') {
         setFace(msg.detected, msg.bbox)
       }
@@ -49,9 +57,14 @@ export function useWebSocket() {
 
   const sendFrame = useCallback((base64jpeg: string) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: 'frame', data: base64jpeg }))
+      const age = getAge?.() ?? null
+      const payload: Record<string, unknown> = { type: 'frame', data: base64jpeg }
+      if (typeof age === 'number' && !Number.isNaN(age) && age >= 0) {
+        payload.age = age
+      }
+      ws.current.send(JSON.stringify(payload))
     }
-  }, [])
+  }, [getAge])
 
   // Cleanup on unmount
   useEffect(() => () => { disconnect() }, [disconnect])

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app.core.config import settings
 from app.services.face_detector import FaceDetector
+from app.services.history_store import init_history_db
 from app.services.rppg_engine import RPPGEngine
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,9 @@ async def lifespan(app: FastAPI):
 
     logger.info("Initializing MediaPipe face detector")
     face_detector = FaceDetector()
+
+    logger.info("Initializing history DB")
+    init_history_db()
 
     logger.info("Startup complete.")
     yield

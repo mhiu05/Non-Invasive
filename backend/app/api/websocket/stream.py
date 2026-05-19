@@ -10,6 +10,7 @@ Protocol:
   Server → Client: {"type": "error", "message": "..."}
 """
 
+import asyncio
 import base64
 import json
 import logging
@@ -21,7 +22,13 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.core.config import settings
 from app.services.blink_detector import BlinkDetector
 from app.services.rppg_engine import SessionState
-from app.services.signal_processor import compute_heart_rate
+from app.services.signal_processor import (
+    compute_heart_rate,
+    compute_hrv,
+    process_bvp,
+    get_age_group,
+    get_bandpass_by_age,
+)
 import app.core.lifespan as state
 
 logger = logging.getLogger(__name__)
@@ -78,31 +85,96 @@ async def websocket_stream(ws: WebSocket):
             if frame is None:
                 continue
 
-            # Face detection
-            crop, bbox = state.face_detector.crop_resize(frame, state.engine.img_size)
+            # Face detection — chạy trong thread pool để không block event loop
+            loop = asyncio.get_event_loop()
+            crop, bbox = await loop.run_in_executor(
+                None, state.face_detector.crop_resize, frame, state.engine.img_size
+            )
+
+            if bbox is None:
+                # Nếu mất mặt -> reset session ngay lập tức để không tính HR từ background tường nhà
+                sess.reset()
+                blink.reset()
+                await ws.send_text(json.dumps({
+                    "type": "face",
+                    "detected": False,
+                    "bbox": None,
+                }))
+                await ws.send_text(json.dumps({
+                    "type": "vitals",
+                    "heart_rate": None,
+                    "blink_rate": None,
+                    "snr_db": None,
+                    "bvp_window": [],
+                    "buffer_frames": 0,
+                    "buffer_needed": sess.engine.input_frames if sess._is_chunk else sess.engine.buffer_size,
+                }))
+                continue
+
+            # Nếu có mặt thì mới push vào rPPG
             blink.push(frame, bbox)
+
+            if isinstance(msg.get('age'), int) and msg['age'] >= 0:
+                sess.age = msg['age']
 
             await ws.send_text(json.dumps({
                 "type": "face",
-                "detected": bbox is not None,
-                "bbox": list(bbox) if bbox else None,
+                "detected": True,
+                "bbox": list(bbox),
             }))
 
-            # rPPG inference
-            bvp_buf = sess.push_frame(crop)
+            # rPPG inference - chạy non-blocking
+            bvp_buf = await loop.run_in_executor(None, sess.push_frame, crop)
             if bvp_buf is not None:
-                hr, snr = compute_heart_rate(
+                low_hz, high_hz = get_bandpass_by_age(sess.age)
+                sig = await loop.run_in_executor(
+                    None,
+                    process_bvp,
                     bvp_buf,
-                    fs=settings.fps,
-                    low_hz=settings.hr_low_hz,
-                    high_hz=settings.hr_high_hz,
+                    settings.fps,
+                    low_hz,
+                    high_hz,
                 )
+                hr, snr = await loop.run_in_executor(
+                    None,
+                    compute_heart_rate,
+                    bvp_buf,
+                    settings.fps,
+                    low_hz,
+                    high_hz,
+                )
+                hrv = await loop.run_in_executor(None, compute_hrv, sig, settings.fps)
                 await ws.send_text(json.dumps({
                     "type": "vitals",
                     "heart_rate": round(hr, 1),
                     "blink_rate": round(blink.get_rate(), 1),
                     "snr_db": round(snr, 2),
-                    "bvp_window": [round(v, 4) for v in bvp_buf[-60:].tolist()],
+                    "bvp_window": [round(float(v), 4) for v in bvp_buf.tolist()],
+                    "age": sess.age,
+                    "age_group": get_age_group(sess.age),
+                    "bandpass_low_hz": low_hz,
+                    "bandpass_high_hz": high_hz,
+                    "hrv_ms": round(hrv["hrv_ms"], 2),
+                    "sdnn_ms": round(hrv["sdnn_ms"], 2),
+                    "rmssd_ms": round(hrv["rmssd_ms"], 2),
+                    "pnn50": round(hrv["pnn50"], 2),
+                    "peak_count": hrv["peak_count"],
+                }))
+            else:
+                # Send progress while buffer is filling up
+                partial = (
+                    list(sess._frame_buf) if sess._is_chunk else list(sess._bvp)
+                )
+                await ws.send_text(json.dumps({
+                    "type": "vitals",
+                    "heart_rate": None,
+                    "blink_rate": round(blink.get_rate(), 1),
+                    "snr_db": None,
+                    "bvp_window": [],
+                    "buffer_frames": len(partial),
+                    "buffer_needed": sess.engine.input_frames if sess._is_chunk else sess.engine.buffer_size,
+                    "age": sess.age,
+                    "age_group": get_age_group(sess.age),
                 }))
 
         except WebSocketDisconnect:
@@ -110,4 +182,4 @@ async def websocket_stream(ws: WebSocket):
             break
         except Exception as exc:
             # Lỗi xử lý frame — log nhưng KHÔNG đóng connection
-            logger.warning("Frame processing error (skipping): %s", exc)
+            logger.exception("Frame processing error (skipping): %s", exc)

@@ -12,12 +12,13 @@ import json
 import logging
 import os
 import sys
+import threading
 from collections import deque
 
 import numpy as np
 import onnxruntime as ort
 
-from app.services.preprocessor import build_deepphys_input
+from app.services.preprocessor import build_deepphys_input, build_chunk_input
 
 logger = logging.getLogger(__name__)
 
@@ -269,45 +270,144 @@ class RPPGEngine:
                 self.norm_type, device,
             )
 
+        self.model_type: str = cfg.get("model", "")
+
+        # Xác định số frames cần tích lũy trước khi infer
+        # - Frame-by-frame models (DeepPhys, TSCAN, EfficientPhys): input_frames = 0 (dùng prev_frame)
+        # - Chunk models (FactorizePhys, PhysNet, ...): đọc dim 2 từ ONNX shape
+        _FRAMEWISE = {"DeepPhys", "TSCAN", "EfficientPhys"}
+        if self.model_type in _FRAMEWISE:
+            self.input_frames: int = 0  # framewise
+        else:
+            # Lấy số frames từ shape dim 2 của ONNX input (e.g. 181 với FactorizePhys)
+            try:
+                in_shape = self.session.get_inputs()[0].shape  # ['batch', 3, 181, H, W]
+                self.input_frames = int(in_shape[2])
+            except Exception:
+                self.input_frames = self.buffer_size + 1  # fallback
+            logger.info("Chunk model: input_frames=%d", self.input_frames)
+
         self._input_name: str = self.session.get_inputs()[0].name
 
     def infer(self, inp: np.ndarray) -> float:
-        """Chạy một forward pass. inp shape phụ thuộc model (xem model_config.json)."""
+        """Forward pass frame-wise. inp: (1, 6, H, W) float32. Trả về 1 scalar BVP."""
         out = self.session.run(None, {self._input_name: inp})[0]
         return float(out.flatten()[0])
 
+    def infer_chunk(self, inp: np.ndarray) -> np.ndarray:
+        """Forward pass chunk-wise. inp: (1, 3, T+1, H, W) float32. Trả về (T,) BVP array."""
+        out = self.session.run(None, {self._input_name: inp})[0]  # (1, T)
+        return out.flatten().astype(np.float64)  # (T,)
 
 # ---------------------------------------------------------------------------
 # SessionState
 # ---------------------------------------------------------------------------
 
 class SessionState:
-    """Per-WebSocket connection state. Not thread-safe — one per connection."""
+    """Per-WebSocket connection state. Not thread-safe — one per connection.
+
+    Hỗ trợ 2 chế độ:
+    - Frame-wise (DeepPhys, TSCAN, EfficientPhys): infer từng cặp frame, tích lũy BVP scalars.
+    - Chunk-wise (FactorizePhys, PhysNet, ...): tích lũy input_frames raw crops,
+      infer một lần → nhận buffer_size BVP values; sau đó slide window 1 frame.
+    """
 
     def __init__(self, engine: RPPGEngine, fps: int = 30):
         self.engine = engine
         self.fps = fps
-        self._prev_frame: np.ndarray | None = None
-        self._bvp: deque[float] = deque(maxlen=engine.buffer_size)
+        self._is_chunk: bool = engine.input_frames > 0
+
+        self.age: int | None = None
+        if self._is_chunk:
+            # Lưu raw frame crops (deque giữ tối đa input_frames)
+            self._frame_buf: deque[np.ndarray] = deque(maxlen=engine.input_frames)
+            self._bvp: deque[float] = deque(maxlen=engine.buffer_size)
+            self._step_counter: int = 0
+            self._chunk_stride: int = 15  # Chỉ infer 1 lần mỗi 15 frames (~0.5s) để tránh lag
+            
+            # Threading cho background inference
+            self._is_inferring: bool = False
+            self._lock = threading.Lock()
+        else:
+            self._prev_frame: np.ndarray | None = None
+            self._bvp: deque[float] = deque(maxlen=engine.buffer_size)
+
+    # ------------------------------------------------------------------
 
     def push_frame(self, face_crop_bgr: np.ndarray) -> np.ndarray | None:
         """
         Push một (img_size × img_size) BGR face crop.
-        Trả về numpy BVP buffer khi đủ buffer_size frame, ngược lại trả None.
+        Trả về numpy BVP array khi đủ buffer_size, ngược lại trả None.
         """
+        if self._is_chunk:
+            return self._push_chunk(face_crop_bgr)
+        return self._push_framewise(face_crop_bgr)
+
+    # ------------------------------------------------------------------
+
+    def _push_framewise(self, frame: np.ndarray) -> np.ndarray | None:
+        """Frame-by-frame inference (DeepPhys, TSCAN, EfficientPhys)."""
         if self._prev_frame is None:
-            self._prev_frame = face_crop_bgr
+            self._prev_frame = frame
             return None
 
-        inp = build_deepphys_input(face_crop_bgr, self._prev_frame)
+        inp = build_deepphys_input(frame, self._prev_frame)
         bvp_val = self.engine.infer(inp)
         self._bvp.append(bvp_val)
-        self._prev_frame = face_crop_bgr
+        self._prev_frame = frame
 
         if len(self._bvp) >= self.engine.buffer_size:
             return np.array(self._bvp, dtype=np.float64)
         return None
 
+    def _do_infer_bg(self, frames_copy: list[np.ndarray]) -> None:
+        """Chạy inference trong background thread để không block WebSocket loop."""
+        try:
+            inp = build_chunk_input(frames_copy)
+            bvp_arr = self.engine.infer_chunk(inp)
+            with self._lock:
+                self._bvp.clear()
+                for v in bvp_arr:
+                    self._bvp.append(float(v))
+        except Exception as e:
+            logger.error("Background infer error: %s", e)
+        finally:
+            self._is_inferring = False
+
+    def _push_chunk(self, frame: np.ndarray) -> np.ndarray | None:
+        """Chunk-wise inference (FactorizePhys, PhysNet, ...)."""
+        self._frame_buf.append(frame)
+
+        if len(self._frame_buf) < self.engine.input_frames:
+            return None  # chưa đủ frames
+
+        self._step_counter += 1
+
+        # Lấy copy của BVP buffer hiện tại một cách an toàn
+        with self._lock:
+            bvp_copy = np.array(self._bvp, dtype=np.float64) if len(self._bvp) > 0 else None
+
+        # Tránh lag: chỉ infer 1 lần mỗi 15 frames và đảm bảo thread cũ đã xong
+        if self._step_counter % self._chunk_stride == 1:
+            if not self._is_inferring:
+                self._is_inferring = True
+                frames_copy = list(self._frame_buf)
+                threading.Thread(
+                    target=self._do_infer_bg, 
+                    args=(frames_copy,), 
+                    daemon=True
+                ).start()
+
+        return bvp_copy
+
+    # ------------------------------------------------------------------
+
     def reset(self) -> None:
-        self._prev_frame = None
-        self._bvp.clear()
+        if self._is_chunk:
+            with self._lock:
+                self._frame_buf.clear()
+                self._step_counter = 0
+                self._bvp.clear()
+        else:
+            self._prev_frame = None
+            self._bvp.clear()

@@ -14,6 +14,15 @@ class VitalsMessage(BaseModel):
     blink_rate: float
     snr_db: float
     bvp_window: list[float] = []  # last N BVP values for chart
+    age: int | None = None
+    age_group: str | None = None
+    bandpass_low_hz: float | None = None
+    bandpass_high_hz: float | None = None
+    hrv_ms: float | None = None
+    sdnn_ms: float | None = None
+    rmssd_ms: float | None = None
+    pnn50: float | None = None
+    peak_count: int | None = None
 
 
 class ErrorMessage(BaseModel):
@@ -35,3 +44,12 @@ class VideoResultResponse(BaseModel):
     blink_rate: float
     snr_db: float
     bvp_signal: list[float]
+    age: int | None = None
+    age_group: str | None = None
+    bandpass_low_hz: float | None = None
+    bandpass_high_hz: float | None = None
+    hrv_ms: float | None = None
+    sdnn_ms: float | None = None
+    rmssd_ms: float | None = None
+    pnn50: float | None = None
+    peak_count: int | None = None

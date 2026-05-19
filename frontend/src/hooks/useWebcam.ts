@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 
-const CAPTURE_FPS = 15  // gửi 15fps là đủ cho rPPG
+const CAPTURE_FPS = 30  // gửi 30fps để khớp với backend settings.fps = 30
 
 export function useWebcam(onFrame: (base64jpeg: string) => void) {
   const videoRef = useRef<HTMLVideoElement>(null)

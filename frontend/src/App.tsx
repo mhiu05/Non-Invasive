@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Header } from '@/components/Header'
 import { Home } from '@/pages/Home'
 import { Upload } from '@/pages/Upload'
+import { ChatBot } from '@/components/ChatBot'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route path="/"       element={<Home />} />
           <Route path="/upload" element={<Upload />} />
         </Routes>
+        <ChatBot />
       </div>
     </BrowserRouter>
   )

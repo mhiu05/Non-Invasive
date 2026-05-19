@@ -1,12 +1,13 @@
 # Non-Invasive Health Analysis
 
-Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt — nhịp tim, tốc độ chớp mắt, tín hiệu BVP.
+Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt — nhịp tim, tốc độ chớp mắt, tín hiệu BVP, kèm chatbot AI hỗ trợ sức khỏe.
 
 ```
 webcam / video  →  face detection (MediaPipe)
                →  rPPG inference (ONNX hoặc PyTorch fallback)
                →  signal processing (FFT)
-               →  Heart Rate, Blink Rate, SNR
+               →  Heart Rate, Blink Rate, SNR, HRV
+               →  AI Chatbot (RAG + Gemini) hỗ trợ tư vấn
 ```
 
 ![Demo](figures/demo.png)
@@ -33,28 +34,45 @@ Non-Invasive/
 │   ├── models/              # 10 kiến trúc: DeepPhys, TSCAN, PhysNet, EfficientPhys,
 │   │                        #   PhysFormer, PhysMamba, RhythmFormer, BigSmall, iBVPNet, FactorizePhys
 │   ├── export/              # Script convert .pth → .onnx
-│   │   └── export_onnx.py
-│   ├── export_batch.sh      # Batch export toàn bộ weights
 │   ├── evaluation/          # Metrics: MAE, RMSE, SNR, Pearson
 │   ├── weights/             # 36 pretrained .pth + 34 .onnx đã convert
 │   └── notebooks_inference/ # Jupyter inference notebooks
+│
 ├── backend/                 # FastAPI server (port 8001)
 │   ├── app/
 │   │   ├── core/            # config, lifespan
 │   │   ├── services/        # rppg_engine, face_detector, preprocessor,
-│   │   │                    #   signal_processor, blink_detector
+│   │   │                    #   signal_processor, blink_detector, history_store
+│   │   ├── chatbot/         # RAG chatbot: engine, loader, vectorstore
+│   │   ├── documents/       # Tài liệu cho chatbot học (PDF, .md, .txt)
+│   │   ├── schemas/         # Pydantic models
 │   │   └── api/             # routes + websocket
+│   ├── scripts/             # Utility scripts (build_embeddings.py)
+│   ├── vectorstore/         # FAISS index (generated, gitignored)
 │   ├── weights/             # 34 .onnx models + model_config.json
-│   ├── doc/
-│   │   └── convert.md       # Ghi chú quá trình convert ONNX
+│   ├── tests/               # Unit tests
 │   └── .env
+│
 ├── frontend/                # React + TypeScript web app (port 3002)
 │   ├── src/
 │   │   ├── pages/           # Home (live webcam), Upload (offline video)
-│   │   ├── components/      # VitalSignCard, BVPChart, FaceOverlay
-│   │   └── hooks/           # useWebSocket, useWebcam
+│   │   ├── components/      # VitalSignCard, BVPChart, FaceOverlay, ChatBot
+│   │   ├── hooks/           # useWebSocket, useWebcam
+│   │   ├── lib/             # api, chatApi, utils
+│   │   ├── store/           # vitalsStore (Zustand)
+│   │   └── types/           # vitals, chat
 │   └── package.json
+│
+├── docs/                    # Tài liệu hướng dẫn dự án
+│   ├── ARCHITECTURE.md      # Kiến trúc hệ thống
+│   ├── PLAN.md              # Kế hoạch phát triển
+│   ├── chatbot_plan.md      # Kế hoạch tích hợp chatbot
+│   ├── deploy.md            # Hướng dẫn deploy
+│   ├── details.md           # Chi tiết từng file
+│   └── convert.md           # Ghi chú convert ONNX
+│
 ├── figures/                 # Ảnh demo và benchmark
+├── requirements.txt         # Python dependencies (toàn bộ dự án)
 └── README.md
 ```
 
@@ -89,6 +107,17 @@ npm run dev
 ```
 
 Mở trình duyệt: `http://localhost:3002`
+
+> Lưu ý: frontend dev server chạy trên cổng `3002` theo cấu hình `frontend/vite.config.ts`.
+
+### Bước 3 — Build chatbot vectorstore (lần đầu)
+
+```bash
+cd backend
+python scripts/build_embeddings.py
+```
+
+> Chỉ cần chạy lần đầu hoặc khi cập nhật tài liệu trong `backend/app/documents/`.
 
 ### Chạy song song
 
@@ -126,6 +155,14 @@ cd frontend && npm run dev
 2. Kéo thả file video (MP4, AVI, MOV) hoặc click chọn file
 3. Chờ xử lý → kết quả hiện ngay
 
+### AI Chatbot
+
+- Click nút chat ở góc phải màn hình (hiện trên mọi trang)
+- Hỏi về kết quả đo sức khỏe, kiến trúc hệ thống, hoặc ý nghĩa các chỉ số
+- Chatbot sử dụng RAG từ tài liệu trong `backend/app/documents/`
+
+> ⚠️ Thông tin sức khỏe từ chatbot chỉ mang tính tham khảo, không thay thế bác sĩ.
+
 ---
 
 ## Kết quả Benchmark
@@ -162,7 +199,7 @@ Metrics: MAE (bpm), RMSE (bpm), MAPE (%), Pearson, SNR (dB).
 
 ### `POST /video/upload`
 
-**Request:** `multipart/form-data`, field `file`
+**Request:** `multipart/form-data`, field `file`, optional field `age`
 
 **Response:**
 ```json
@@ -173,7 +210,29 @@ Metrics: MAE (bpm), RMSE (bpm), MAPE (%), Pearson, SNR (dB).
   "heart_rate": 72.5,
   "blink_rate": 14.1,
   "snr_db": 8.3,
-  "bvp_signal": [0.012, -0.005, "..."]
+  "bvp_signal": [0.012, -0.005, "..."],
+  "age": 25,
+  "age_group": "adult",
+  "hrv_ms": 45.2,
+  "sdnn_ms": 38.5,
+  "rmssd_ms": 42.1,
+  "pnn50": 15.3,
+  "peak_count": 35
+}
+```
+
+### `POST /chat`
+
+**Request:**
+```json
+{ "question": "Nhịp tim 95 bpm có bình thường không?" }
+```
+
+**Response:**
+```json
+{
+  "answer": "Nhịp tim 95 bpm nằm ở mức cao bình thường...",
+  "sources": ["Medical_book.pdf"]
 }
 ```
 
@@ -196,7 +255,7 @@ Metrics: MAE (bpm), RMSE (bpm), MAPE (%), Pearson, SNR (dB).
 
 ### Dùng model đã có trong `backend/weights/`
 
-Backend có sẵn **34 model ONNX** — xem danh sách đầy đủ trong [backend/doc/convert.md](backend/doc/convert.md).
+Backend có sẵn **34 model ONNX** — xem danh sách đầy đủ trong [docs/convert.md](docs/convert.md).
 
 Ví dụ dùng FactorizePhys:
 ```env
@@ -213,7 +272,7 @@ Cập nhật `backend/weights/model_config.json` cho đúng model:
 
 Backend tự động fallback sang PyTorch khi:
 - `MODEL_PATH` trỏ tới file `.pth`, hoặc
-- File `.onnx` không tồn tại nhưng có file `.pth` tương ứng (cùng thư mục hoặc `rPPG/weights/`)
+- File `.onnx` không tồn tại nhưng có file `.pth` tương ứng
 
 ```env
 # backend/.env — dùng PhysMamba trực tiếp từ .pth
@@ -256,7 +315,7 @@ bash export_batch.sh
 | MA-UBFC | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
 
 ✅ = ONNX sẵn trong `backend/weights/`  
-⚠️ = Chỉ có `.pth` (PyTorch fallback, xem [backend/doc/convert.md](backend/doc/convert.md))
+⚠️ = Chỉ có `.pth` (PyTorch fallback, xem [docs/convert.md](docs/convert.md))
 
 ---
 
@@ -268,3 +327,7 @@ bash export_batch.sh
 
 ### Face không được phát hiện
 → Khoảng cách: 40–80 cm, nhìn thẳng, ánh sáng từ phía trước.
+
+### Chatbot không phản hồi
+→ Kiểm tra `GEMINI_API_KEY` trong `backend/.env`.  
+→ Đảm bảo đã chạy `python scripts/build_embeddings.py` trong thư mục `backend/`.
