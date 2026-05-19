@@ -70,3 +70,55 @@ export interface HistoryRecord {
   peak_count?: number | null
   result?: Record<string, unknown> | null
 }
+
+/* ── Async job types ── */
+export interface AsyncJobResponse {
+  job_id: string
+  status: 'pending' | 'running' | 'done' | 'failed'
+}
+
+export interface AsyncJobStatus {
+  job_id: string
+  status: 'pending' | 'running' | 'done' | 'failed'
+  result: VideoResult | null
+  error: string | null
+  updated_at: string
+}
+
+/* ── History filter params ── */
+export interface HistoryFilters {
+  type?: string
+  start_at?: string
+  end_at?: string
+  limit?: number
+  offset?: number
+}
+
+/* ── SNR quality helpers ── */
+export type SnrQuality = 'excellent' | 'good' | 'fair' | 'poor'
+
+export function getSnrQuality(snr: number | null | undefined): SnrQuality {
+  if (snr == null) return 'poor'
+  if (snr >= 8) return 'excellent'
+  if (snr >= 5) return 'good'
+  if (snr >= 3) return 'fair'
+  return 'poor'
+}
+
+export function getSnrLabel(q: SnrQuality): string {
+  switch (q) {
+    case 'excellent': return 'Xuất sắc'
+    case 'good':      return 'Tốt'
+    case 'fair':      return 'Trung bình'
+    case 'poor':      return 'Yếu'
+  }
+}
+
+export function getSnrColor(q: SnrQuality) {
+  switch (q) {
+    case 'excellent': return { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', ring: 'ring-emerald-500/30' }
+    case 'good':      return { bg: 'bg-green-100 dark:bg-green-900/30',     text: 'text-green-700 dark:text-green-300',     ring: 'ring-green-500/30' }
+    case 'fair':      return { bg: 'bg-amber-100 dark:bg-amber-900/30',     text: 'text-amber-700 dark:text-amber-300',     ring: 'ring-amber-500/30' }
+    case 'poor':      return { bg: 'bg-red-100 dark:bg-red-900/30',         text: 'text-red-700 dark:text-red-300',         ring: 'ring-red-500/30' }
+  }
+}

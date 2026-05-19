@@ -22,19 +22,19 @@
 - ✅ Chatbot RAG: backend module + frontend widget.
 - ✅ 34/36 model ONNX đã convert.
 
-## 3. Ưu tiên cao (High)
+## 3. Ưu tiên cao (High) — ✅ Đã hoàn thành
 
-- 🔴 Hoàn thiện UI upload async:
-  - thêm form upload async,
-  - hiển thị `job_id` và polling trạng thái,
-  - thông báo khi job hoàn tất.
-- 🔴 Hoàn thiện lịch sử:
-  - thêm lọc `type`, `start_at`, `end_at`,
-  - thêm chi tiết record history,
-  - hiển thị thông tin `duration_sec`, `age_group`, `bandpass_low_hz`, `bandpass_high_hz`, `pnn50`.
-- 🔴 Thêm phản hồi chất lượng tín hiệu:
-  - cảnh báo khi `snr_db` thấp,
-  - badge trạng thái chất lượng dựa trên SNR.
+- ✅ Hoàn thiện UI upload async:
+  - form upload gọi `POST /video/upload-async`,
+  - hiển thị `job_id` và polling trạng thái mỗi 2s,
+  - thông báo khi job hoàn tất hoặc thất bại.
+- ✅ Hoàn thiện lịch sử:
+  - lọc theo `type`, `start_at`, `end_at` với filter panel,
+  - modal chi tiết record history (click vào row),
+  - hiển thị `duration_sec`, `age_group`, `bandpass_low_hz`, `bandpass_high_hz`, `pnn50`, `sdnn_ms`, `peak_count`.
+- ✅ Thêm phản hồi chất lượng tín hiệu:
+  - cảnh báo khi `snr_db` < 3 dB (banner vàng),
+  - badge SNR (Xuất sắc/Tốt/Trung bình/Yếu) trên kết quả và bảng lịch sử.
 
 ## 4. Ưu tiên trung bình (Medium)
 

@@ -32,7 +32,7 @@ webcam / video  →  face detection (MediaPipe)
 Non-Invasive/
 ├── rPPG/                    # Model research & export
 │   ├── models/              # 10 kiến trúc: DeepPhys, TSCAN, PhysNet, EfficientPhys,
-│   │                        #   PhysFormer, PhysMamba, RhythmFormer, BigSmall, iBVPNet, FactorizePhys
+│   │                        #   PhysFormer, PhysMamba, RhythmFormer, BigSmall, iBVPNet, 
 │   ├── export/              # Script convert .pth → .onnx
 │   ├── evaluation/          # Metrics: MAE, RMSE, SNR, Pearson
 │   ├── weights/             # 36 pretrained .pth + 34 .onnx đã convert
