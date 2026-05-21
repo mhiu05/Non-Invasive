@@ -44,6 +44,8 @@ print("\n=== Testing chain imports ===")
 paths_retrieval = [
     "langchain.chains:create_retrieval_chain",
     "langchain.chains.retrieval:create_retrieval_chain",
+    "langchain_classic.chains:create_retrieval_chain",
+    "langchain_classic.chains.retrieval:create_retrieval_chain",
 ]
 
 for path in paths_retrieval:
@@ -57,6 +59,7 @@ for path in paths_retrieval:
 
 paths_stuff = [
     "langchain.chains.combine_documents:create_stuff_documents_chain",
+    "langchain_classic.chains.combine_documents:create_stuff_documents_chain",
 ]
 
 for path in paths_stuff:

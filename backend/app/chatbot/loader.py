@@ -1,7 +1,8 @@
 """
-loader.py — Load & split Markdown/code documents for RAG chatbot.
+loader.py — Load & split Markdown/Text/PDF documents for RAG chatbot.
 
-Replaces PyPDFLoader from medical-chatbot with TextLoader for .md and .py files.
+Loads documents from backend/app/documents/ and preserves source metadata so
+responses can include transparent document references.
 """
 
 from langchain_community.document_loaders import TextLoader, DirectoryLoader, PyPDFLoader
@@ -12,11 +13,26 @@ from typing import List
 import os
 
 
+def _document_dir(base_dir: str) -> str:
+    return os.path.join(base_dir, "backend", "app", "documents")
+
+
+def _normalize_source_metadata(doc: Document) -> None:
+    metadata = dict(doc.metadata or {})
+    source = (
+        metadata.get("source")
+        or metadata.get("path")
+        or metadata.get("file_path")
+        or metadata.get("source_file")
+    )
+    metadata["source"] = os.path.basename(str(source)) if source else "unknown"
+    doc.metadata = metadata
+
+
 def load_documents(base_dir: str) -> List[Document]:
     """Load all .md, .txt, and .pdf files from documents directory."""
     docs = []
-    
-    doc_dir = os.path.join(base_dir, "backend", "app", "documents")
+    doc_dir = _document_dir(base_dir)
     
     configs = [
         {"glob": "**/*.md", "loader_cls": TextLoader, "loader_kwargs": {"encoding": "utf-8"}},
@@ -33,7 +49,10 @@ def load_documents(base_dir: str) -> List[Document]:
                     loader_cls=config["loader_cls"],
                     loader_kwargs=config["loader_kwargs"],
                 )
-                docs.extend(loader.load())
+                documents = loader.load()
+                for doc in documents:
+                    _normalize_source_metadata(doc)
+                docs.extend(documents)
             except Exception as e:
                 print(f"Warning: Could not load {config['glob']} from {doc_dir}: {e}")
 
@@ -41,11 +60,17 @@ def load_documents(base_dir: str) -> List[Document]:
 
 
 def text_split(documents: List[Document]) -> List[Document]:
-    """Split documents into chunks for embedding."""
+    """Split documents into chunks for embedding and preserve source metadata."""
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    return splitter.split_documents(documents)
+    chunks = splitter.split_documents(documents)
+    for chunk_index, doc in enumerate(chunks, start=1):
+        _normalize_source_metadata(doc)
+        metadata = dict(doc.metadata or {})
+        metadata.setdefault("chunk_id", str(chunk_index))
+        doc.metadata = metadata
+    return chunks
 
 
 def get_embeddings():
-    """Get HuggingFace embeddings model (same as medical-chatbot)."""
+    """Get HuggingFace embeddings model."""
     return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")

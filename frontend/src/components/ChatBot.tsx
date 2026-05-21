@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MessageCircle, X, Send, Bot, User, FileText, Loader2 } from 'lucide-react'
+import { MessageCircle, X, Send, Bot, User, FileText, Loader2, Globe, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { sendChatMessage } from '@/lib/chatApi'
 import type { ChatMessage } from '@/types/chat'
@@ -58,6 +58,7 @@ export function ChatBot() {
           role: 'bot',
           content: res.answer,
           sources: res.sources,
+          fromInternalDocs: res.from_internal_docs,
           timestamp: new Date(),
         }
         setMessages((prev) => [...prev, botMsg])
@@ -219,9 +220,37 @@ export function ChatBot() {
               )}
             >
               <p className="whitespace-pre-wrap">{msg.content}</p>
+              {/* Source badge: internal docs vs Gemini */}
+              {msg.role === 'bot' && msg.fromInternalDocs !== undefined && (
+                <div className="mt-2">
+                  {msg.fromInternalDocs ? (
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium',
+                        'bg-emerald-100/80 dark:bg-emerald-900/40',
+                        'text-emerald-700 dark:text-emerald-300',
+                      )}
+                    >
+                      <BookOpen size={10} />
+                      📚 Nguồn: Tài liệu nội bộ
+                    </span>
+                  ) : (
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium',
+                        'bg-amber-100/80 dark:bg-amber-900/40',
+                        'text-amber-700 dark:text-amber-300',
+                      )}
+                    >
+                      <Globe size={10} />
+                      🤖 Nguồn: Gemini AI (không có trong tài liệu nội bộ)
+                    </span>
+                  )}
+                </div>
+              )}
               {/* Sources */}
               {msg.sources && msg.sources.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
+                <div className="mt-1.5 flex flex-wrap gap-1">
                   {msg.sources.map((src) => (
                     <span
                       key={src}

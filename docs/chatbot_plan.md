@@ -1,159 +1,188 @@
-# Chatbot Plan — Tích hợp RAG Chatbot vào Non-Invasive (rPPG)
+﻿# Chatbot Plan — Non-Invasive RAG Chatbot
 
-> **Trạng thái**: ✅ Đã triển khai hoàn chỉnh (backend + frontend).
-> **LLM**: Google Gemini (thay vì OpenAI như kế hoạch ban đầu).
-> **Vector Store**: FAISS (local, không cần API key).
-> **Tài liệu**: PDF/Markdown/Text trong `backend/app/documents/`.
+## Mục tiêu
 
----
+Tài liệu này mô tả kiến trúc hiện tại của chatbot trong dự án Non-Invasive và hướng dẫn cách mở rộng để:
 
-## 1. Mục tiêu
-
-Tích hợp chatbot RAG (Retrieval-Augmented Generation) vào hệ thống Non-Invasive, giúp:
-
-- **Người dùng cuối**: Hiểu kết quả đo (HR, HRV, Blink, SNR), nhận lời khuyên sức khỏe cơ bản.
-- **Developer / QA**: Tra cứu kiến trúc, pipeline xử lý tín hiệu, model đang dùng.
-- **Product**: Cảnh báo khi chỉ số bất thường, hướng dẫn cải thiện chất lượng đo.
+- dùng hiệu quả tài liệu nội bộ trong `backend/app/documents/`
+- xây dựng và cập nhật FAISS vectorstore
+- đảm bảo nguồn tham khảo rõ ràng trong câu trả lời
+- hướng đến mở rộng tìm kiếm web và self-learning trong tương lai
 
 ---
 
-## 2. Kiến trúc đã triển khai
+## 1. Kiến trúc hiện tại
 
-```
-User (React Frontend — ChatBot.tsx)
-    │  POST /chat  {question}
-    ▼
-FastAPI Backend  ── backend/app/api/routes/chat.py
-    │
-    ├── Embeddings: HuggingFace all-MiniLM-L6-v2
-    ├── Vector Store: FAISS  (file: backend/vectorstore/faiss_index/)
-    │       └── built from: backend/app/documents/ (PDFs, .md, .txt)
-    ├── Retriever: similarity search, top-k=10
-    ├── LLM: Google Gemini (gemini-2.5-flash)
-    └── RAG Chain: LangChain create_retrieval_chain
-```
+### 1.1. Dòng dữ liệu chính
 
----
+1. Người dùng gửi câu hỏi đến API chatbot.
+2. Backend gọi `app.chatbot.engine.ask(question)`.
+3. `engine.py` lazy-load RAG chain nếu chưa khởi tạo.
+4. RAG chain sử dụng:
+   - FAISS vectorstore cục bộ trên `backend/vectorstore/faiss_index/`
+   - embeddings từ `sentence-transformers/all-MiniLM-L6-v2`
+   - Google Gemini qua `langchain_google_genai`
+5. Kết quả trả về gồm `answer` và danh sách `sources`.
 
-## 3. Cấu trúc file đã tạo
+### 1.2. Các module chính
 
-```
-backend/
-├── app/
-│   ├── chatbot/
-│   │   ├── __init__.py
-│   │   ├── loader.py         ← load & split PDF/Markdown/Text
-│   │   ├── vectorstore.py    ← build & load FAISS index
-│   │   └── engine.py         ← RAG chain (Gemini + FAISS)
-│   ├── documents/
-│   │   └── Medical_book.pdf  ← tài liệu chatbot học
-│   └── api/
-│       └── routes/
-│           └── chat.py       ← FastAPI endpoint POST /chat
-│
-├── scripts/
-│   └── build_embeddings.py   ← script chạy 1 lần để build vectorstore
-│
-└── vectorstore/
-    └── faiss_index/          ← FAISS index (generated, gitignored)
+- `backend/app/chatbot/loader.py`
+  - nạp tài liệu từ `backend/app/documents/`
+  - hỗ trợ `.md`, `.txt`, `.pdf`
+  - chia tài liệu thành chunk với `chunk_size=500`, `chunk_overlap=50`
+  - thanh lọc và giữ metadata `source` cho mỗi chunk
+- `backend/app/chatbot/vectorstore.py`
+  - xây, load và cập nhật FAISS index
+  - hỗ trợ rebuild và incremental update
+  - `VECTORSTORE_PATH` có thể cấu hình bằng biến môi trường
+- `backend/scripts/build_embeddings.py`
+  - nạp tài liệu, chia chunk, tạo embedding, lưu FAISS
+  - chạy khi tài liệu nội bộ thay đổi
+  - hỗ trợ `--force` để rebuild sạch
+- `backend/scripts/rebuild_embeddings.py`
+  - rebuild toàn bộ FAISS index dùng helper chung
+- `backend/app/chatbot/engine.py`
+  - tạo retriever từ FAISS
+  - cấu hình LLM Gemini với prompt hệ thống
+  - trả về answer và sources từ metadata tài liệu
+- `backend/app/chatbot/feedback_store.py`
+  - lưu câu hỏi/answer/sources/rating để mở rộng self-learning
+- `backend/app/chatbot/ingest.py`
+  - ingest nội dung mới vào `backend/app/documents/`
+- `backend/app/chatbot/auto_update.py`
+  - helper rebuild index dùng chung cho script và automation
 
-frontend/
-└── src/
-    ├── components/
-    │   └── ChatBot.tsx        ← UI chat widget (floating button)
-    ├── lib/
-    │   └── chatApi.ts         ← gọi POST /chat
-    └── types/
-        └── chat.ts            ← types cho ChatMessage, ChatResponse
-```
-
----
-
-## 4. Biến môi trường
-
-```ini
-# backend/.env
-GEMINI_API_KEY=your_gemini_api_key_here
-CHATBOT_MODEL=gemini-2.5-flash
-VECTORSTORE_PATH=vectorstore/faiss_index
-```
-
----
-
-## 5. Cách sử dụng
-
-### Build vectorstore (lần đầu)
+### 1.3. Cách dùng hiện tại
 
 ```bash
 cd backend
-python scripts/build_embeddings.py
+python scripts/build_embeddings.py --force
 ```
 
-### Test endpoint
+Hoặc dùng helper rebuild:
 
 ```bash
-curl -X POST http://localhost:8001/chat \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Nhịp tim bao nhiêu là bình thường?"}'
+cd backend
+python scripts/rebuild_embeddings.py
 ```
 
-### Thêm tài liệu mới
-
-1. Đặt file PDF/Markdown/Text vào `backend/app/documents/`.
-2. Chạy lại `python scripts/build_embeddings.py`.
-3. Restart backend (hoặc RAG chain sẽ tự reload khi server restart).
+Sau khi thêm hoặc sửa tài liệu trong `backend/app/documents/`, cần chạy lại một trong hai script này và khởi động lại backend.
 
 ---
 
-## 6. Packages đã cài
+## 2. Chức năng hiện tại
 
-```
-langchain>=0.3.26
-langchain-community>=0.3.26
-langchain-google-genai>=2.1.0
-sentence-transformers>=4.1.0
-faiss-cpu>=1.11.0
-pypdf>=5.0.0
-```
+### 2.1. Chatbot đang làm được
 
----
+- trả lời câu hỏi dựa trên nội dung trong `backend/app/documents/`
+- tìm tài liệu liên quan bằng FAISS similarity search
+- bổ sung cảnh báo y tế trong prompt khi câu hỏi liên quan sức khỏe
+- trả về nguồn tham khảo qua `sources`
 
-## 7. Kịch bản sử dụng thực tế
+### 2.2. Hạn chế hiện tại
 
-### Người dùng sau khi đo xong
-```
-User: "Nhịp tim 95 bpm có bình thường không?"
-Bot:  "Nhịp tim 95 bpm nằm ở mức cao bình thường (60-100 bpm theo WHO).
-       Nếu bạn vừa vận động hoặc căng thẳng, đây là bình thường. 
-       Nếu duy trì > 100 bpm lúc nghỉ, nên tham khảo bác sĩ.
-       ⚠️ Thông tin chỉ mang tính tham khảo."
-Sources: [Medical_book.pdf]
-```
-
-### Developer tra cứu pipeline
-```
-User: "Pipeline xử lý video upload hoạt động ra sao?"
-Bot:  "Video upload đi qua preprocessor.py → face_detector.py (MediaPipe)
-       → rppg_engine.py (ONNX) → signal_processor.py (bandpass, FFT peak).
-       Kết quả được lưu vào history.db."
-Sources: [Medical_book.pdf]
-```
+- không có tìm kiếm web, chỉ dùng dữ liệu nội bộ
+- chưa có cơ chế feedback / self-learning hoàn chỉnh, nhưng đã có module lưu feedback và API feedback
+- đã có helper rebuild index; incremental update FAISS còn cần kiểm soát duplicate
+- nếu tài liệu nội bộ thiếu, bot trả "không tìm thấy"
 
 ---
 
-## 8. Cải tiến tương lai
+## 3. Làm sao để phù hợp với dự án hiện tại
 
-- [ ] Thêm conversation history (multi-turn chat).
-- [ ] Truyền context vitals hiện tại (HR, SNR) vào prompt.
-- [ ] Auto-rebuild vectorstore khi tài liệu thay đổi.
-- [ ] Rate limiting cho `/chat` endpoint.
-- [ ] Chuyển FAISS → Pinecone nếu cần multi-instance deployment.
+### 3.1. Cải thiện nguồn tài liệu
+
+- tập trung vào `backend/app/documents/` như nguồn chính
+- giữ tài liệu rõ ràng, có cấu trúc, dễ đọc bằng OCR/Markdown
+- thêm file `README`, `architecture.md`, `medical_book.pdf`, `faq.md`...
+- sau mỗi thay đổi, chạy lại `python scripts/build_embeddings.py`
+
+### 3.2. Ghi nguồn tham khảo rõ ràng
+
+- mỗi chunk cần metadata `source`
+- gom `sources` từ các chunk top-k trả về
+- trả về `sources` trong API response để frontend hiển thị
+
+Ví dụ API response:
+
+```json
+{
+  "answer": "...",
+  "sources": ["Medical_book.pdf", "architecture.md"]
+}
+```
+
+### 3.3. Mở rộng tìm kiếm web (future)
+
+Đây là bước mở rộng, không phải tính năng hiện tại.
+
+- thêm module web search (Google Custom Search, Bing Search, SERP API)
+- scrape/thu thập nội dung từ URL trả về
+- chuyển nội dung web thành document chunks, tạo embeddings
+- kết hợp truy vấn local FAISS và web search
+- luôn kèm nguồn URL khi trả lời web
+
+Lưu ý:
+- ưu tiên nội dung nội bộ
+- nếu dùng nội dung web, cần disclaimer rõ ràng
+- không để bot trả lời bằng web nếu không có nguồn xác thực
+
+### 3.4. Self-learning và auto-update (future)
+
+- lưu trữ lịch sử câu hỏi/answer/feedback
+- chỉ dùng dữ liệu xác thực để học thêm
+- tạo pipeline ingest để thêm nội dung tốt vào corpus
+- rebuild index định kỳ hoặc khi có tài liệu mới
+
+Hiện đã bổ sung module:
+- `backend/app/chatbot/feedback_store.py`
+- `backend/app/chatbot/ingest.py`
+- `backend/app/chatbot/auto_update.py`
+- `backend/scripts/rebuild_embeddings.py`
 
 ---
 
-## 9. Lưu ý quan trọng
+## 4. Đề xuất roadmap
 
-- **Không trả lời y tế tuyệt đối**: Luôn thêm disclaimer khi reply về sức khỏe.
-- **Lazy load**: RAG chain khởi tạo khi có request đầu tiên (không load lúc startup).
-- **Rebuild embeddings**: Chạy lại `build_embeddings.py` mỗi khi thay đổi tài liệu.
-- **API Key**: Không commit `GEMINI_API_KEY` vào git — đã có trong `.gitignore`.
+### Stage 1: Ổn định hiện tại
+
+- [ ] kiểm tra `build_embeddings.py` chạy đúng
+- [ ] xác thực FAISS index tồn tại
+- [ ] đảm bảo `ask()` trả về `answer` và `sources`
+
+### Stage 2: Nguồn tham khảo rõ ràng
+
+- [ ] chuẩn hóa metadata `source`
+- [ ] hiển thị source trong frontend
+- [ ] bổ sung logging câu hỏi + sources
+
+### Stage 3: Bổ sung web search
+
+- [ ] thêm module tìm kiếm web
+- [ ] thêm xử lý nội dung web thành document
+- [ ] fallback khi nội dung nội bộ không có
+
+### Stage 4: Self-learning có kiểm soát
+
+- [ ] thu thập feedback user
+- [ ] lọc dữ liệu tốt
+- [ ] cập nhật index định kỳ
+- [ ] review con người cho nội dung y tế
+
+---
+
+## 5. Tài liệu tham khảo
+
+- `backend/app/chatbot/engine.py`
+- `backend/app/chatbot/loader.py`
+- `backend/app/chatbot/vectorstore.py`
+- `backend/scripts/build_embeddings.py`
+- `backend/app/documents/`
+
+---
+
+## 6. Ghi chú quan trọng
+
+- Chatbot hiện tại vẫn là RAG cục bộ, dựa trên tài liệu nội bộ.
+- Tìm kiếm web và self-learning chưa có sẵn trong mã nguồn.
+- Với dữ liệu y tế, luôn cần cảnh báo và kiểm tra nguồn.
