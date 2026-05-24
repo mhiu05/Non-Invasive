@@ -115,7 +115,7 @@ Nếu bạn thấy swagger và `GET /health` trả về đúng thì backend đã
 ### 5.1 Đẩy frontend lên GitHub
 
 1. Nếu chưa có repo GitHub cho frontend, tạo thêm repo mới hoặc dùng repo hiện tại.
-2. Đảm bảo cấu trúc `frontend/` có đủ `package.json`, `vite.config.ts`, `src/`,...
+2. Đảm bảo cấu trúc `frontend/` có đủ `package.json`, `vite.config.js`, `src/`,...
 3. Commit và đẩy code lên GitHub.
 
 ### 5.2 Kết nối Vercel
@@ -144,21 +144,21 @@ Nếu Vercel không tự nhận thì dùng:
 
 ## 6. Điều chỉnh kết nối WebSocket trong frontend
 
-File `frontend/src/hooks/useWebSocket.ts` đã dùng biến môi trường:
+File `frontend/src/hooks/useWebSocket.js` đã dùng biến môi trường:
 
-```ts
+```js
 const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8001/ws/stream'
 ```
 
 Vì vậy khi deploy trên Vercel, chỉ cần khai báo `VITE_WS_URL` là frontend sẽ kết nối tới Hugging Face Space.
 
 Ghi chú thực tế cho dự án này:
-- Frontend có hai trang: `Home` (realtime via webcam/WebSocket) và `Upload` (upload video offline + xem lịch sử).
+- Frontend có ba trang: `Home` (landing page), `Live` (realtime via webcam/WebSocket) và `Upload` (upload video offline + xem lịch sử).
 - Môi trường sản xuất (Vercel + Hugging Face Space) phải thiết lập `VITE_WS_URL` với `wss://...` (ví dụ `wss://<username>-<space>.hf.space/ws/stream`).
 - Khi phát triển local, fallback `ws://localhost:8001/ws/stream` là phù hợp nếu backend chạy trên port `8001`.
 - Ngoài ra frontend dùng `VITE_API_URL` (mặc định `http://localhost:8001`) cho HTTP API (`/video/upload`, `/history`).
 
-Lưu ý: backend hiện có endpoint async (`POST /video/upload-async`) và `GET /video/jobs/{job_id}`, nhưng frontend `Upload` page hiện đang sử dụng upload đồng bộ (`POST /video/upload`). Nếu bạn muốn dùng luồng async khi deploy, cần cập nhật frontend để gọi `POST /video/upload-async` và polling `GET /video/jobs/{job_id}`.
+Frontend `Upload` page hiện đang sử dụng luồng async (`POST /video/upload-async` + polling `GET /video/jobs/{job_id}`) để xử lý video.
 
 Nếu sử dụng chatbot khi deploy, cần:
 1. Đảm bảo `GEMINI_API_KEY` được cấu hình trong environment của Space.

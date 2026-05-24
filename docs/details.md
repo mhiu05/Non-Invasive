@@ -1,53 +1,45 @@
 # File Details - Frontend & Backend
 
-## Frontend (Ứng dụng React + TypeScript)
+## Frontend (Ứng dụng React + JavaScript)
 
 ### Root Files
 - **index.html** - Điểm vào HTML chính của ứng dụng, chứa root div cho React
-- **main.tsx** - Điểm vào TypeScript, render App component vào DOM
-- **App.tsx** - Component chính, định tuyến trang (Home, Upload) và layout chính
-- **index.css** - Style CSS toàn cục cho ứng dụng
-- **vite.config.ts** - Cấu hình build tool Vite (bundler, dev server, port 3002)
-- **tsconfig.json** - Cấu hình TypeScript cho mã nguồn
-- **tsconfig.node.json** - Cấu hình TypeScript cho các file config (Vite, PostCSS)
-- **postcss.config.js** - Cấu hình PostCSS (xử lý CSS, tương thích với Tailwind)
-- **tailwind.config.ts** - Cấu hình Tailwind CSS (framework CSS utility-first)
+- **main.jsx** - Điểm vào ứng dụng, render App component vào DOM
+- **App/App.jsx** - Component chính, định tuyến trang (Home, Live, Upload) và layout chính
+- **index.css** - Style CSS toàn cục cho ứng dụng (Vanilla CSS, cấu hình biến màu sắc, font)
+- **vite.config.js** - Cấu hình build tool Vite (bundler, dev server, port 3002)
 - **package.json** - Quản lý dependencies và scripts
 
 ### Components (`src/components/`)
-Chứa các React components tái sử dụng:
-- **Header.tsx** - Component header/navbar của ứng dụng
-- **VitalSignCard.tsx** - Card hiển thị chỉ số sức khỏe (nhịp tim, blink rate, SNR)
-- **BVPChart.tsx** - Biểu đồ hiển thị dữ liệu Blood Volume Pulse
-- **FaceOverlay.tsx** - Overlay để vẽ bounding box khuôn mặt lên video
-- **ChatBot.tsx** - Widget chatbot AI (floating button + modal chat)
-- **HistoryView.tsx** - Component xem và lọc lịch sử đo (dùng chung)
-- **SnrBadge.tsx** - Component hiển thị nhãn chất lượng tín hiệu (SNR)
+Chứa các React components tái sử dụng (mỗi component nằm trong một thư mục chứa `.jsx` và `.css`):
+- **Header/** - Component header/navbar của ứng dụng
+- **VitalSignCard/** - Card hiển thị chỉ số sức khỏe (nhịp tim, blink rate, SNR)
+- **BVPChart/** - Biểu đồ hiển thị dữ liệu Blood Volume Pulse
+- **FaceOverlay/** - Overlay để vẽ bounding box khuôn mặt lên video
+- **ChatBot/** - Widget chatbot AI (floating button + modal chat)
+- **HistoryView/** - Component xem và lọc lịch sử đo (dùng chung)
+- **SnrBadge/** - Component hiển thị nhãn chất lượng tín hiệu (SNR)
 
 ### Pages (`src/pages/`)
 Chứa các trang chính:
-- **Home.tsx** - Trang Landing Page giải thích tính năng và hướng dẫn sử dụng.
-- **Live.tsx** - Trang realtime, dùng webcam và WebSocket để nhận vitals live.
-- **Upload.tsx** - Trang upload video offline để hệ thống phân tích bất đồng bộ.
+- **Home/** - Trang Landing Page giải thích tính năng và hướng dẫn sử dụng.
+- **Live/** - Trang realtime, dùng webcam và WebSocket để nhận vitals live.
+- **Upload/** - Trang upload video offline để hệ thống phân tích bất đồng bộ.
 
 ### Store (`src/store/`)
-- **vitalsStore.ts** - Zustand store chứa dữ liệu chỉ số sức khỏe real-time
+- **vitalsStore.js** - Zustand store chứa dữ liệu chỉ số sức khỏe real-time
 
 ### Hooks (`src/hooks/`)
 Custom React hooks:
-- **useWebSocket.ts** - Hook kết nối WebSocket với backend để nhận dữ liệu real-time
-- **useWebcam.ts** - Hook quản lý webcam, capture video frames
-
-### Types (`src/types/`)
-Định nghĩa TypeScript types:
-- **vitals.ts** - Types/interfaces cho dữ liệu chỉ số sức khỏe (VideoResult, HistoryRecord)
-- **chat.ts** - Types cho chatbot (ChatMessage, ChatResponse)
+- **useWebSocket.js** - Hook kết nối WebSocket với backend để nhận dữ liệu real-time
+- **useWebcam.js** - Hook quản lý webcam, capture video frames
 
 ### Utils (`src/lib/`)
 Hàm utility và helper:
-- **api.ts** - API client gọi backend endpoints (uploadVideo, fetchHistory)
-- **chatApi.ts** - API client cho chatbot (sendChatMessage)
-- **utils.ts** - Hàm utility chung (cn helper cho class names)
+- **api.js** - API client gọi backend endpoints (uploadVideoAsync, getJobStatus, fetchHistory, fetchHistoryDetail)
+- **chatApi.js** - API client cho chatbot (sendChatMessage)
+- **utils.js** - Hàm utility chung (cn helper cho class names)
+- **vitals.js** - Hàm xử lý dữ liệu chất lượng tín hiệu (SNR)
 
 ### Config Files
 - **.env** - Biến môi trường (VITE_API_URL, VITE_WS_URL)
@@ -92,6 +84,9 @@ Module RAG chatbot:
 - **loader.py** - Load tài liệu PDF/Markdown/Text từ `app/documents/`
 - **vectorstore.py** - Build/load FAISS vector index
 - **engine.py** - RAG chain (Google Gemini + FAISS retriever, lazy-loaded)
+- **feedback_store.py** - Lưu trữ feedback người dùng (câu hỏi, câu trả lời, rating)
+- **ingest.py** - Ingest nội dung mới vào kho tài liệu `app/documents/`
+- **auto_update.py** - Helper rebuild vectorstore index cho automation
 
 ### Documents (`app/documents/`)
 Tài liệu cho chatbot học:
@@ -105,13 +100,15 @@ Endpoints API:
 - **health.py** - Health check endpoint
 - **video.py** - Endpoints xử lý video (upload sync/async, jobs)
 - **history.py** - Endpoints lấy danh sách và chi tiết lịch sử
-- **chat.py** - Endpoint chatbot RAG (POST /chat)
+- **chat.py** - Endpoint chatbot RAG (POST /chat, POST /chat/feedback)
 
 #### WebSocket (`app/api/websocket/`)
 - **stream.py** - WebSocket handler cho real-time streaming
 
 ### Scripts (`scripts/`)
 - **build_embeddings.py** - Build FAISS vectorstore từ tài liệu
+- **rebuild_embeddings.py** - Rebuild toàn bộ FAISS index
+- **list_gemini_models.py** - Liệt kê các model Gemini có sẵn
 
 ### Tests (`tests/`)
 - **test_api.py** - Unit tests cho API endpoints
@@ -127,22 +124,22 @@ Endpoints API:
 ## Tóm Tắt Flow
 
 ### Upload Video Flow (Async):
-1. User tải video lên từ **Upload.tsx** (Frontend)
-2. Gửi file đến `POST /video/upload-async` qua **api.ts**
+1. User tải video lên từ **Upload.jsx** (Frontend)
+2. Gửi file đến `POST /video/upload-async` qua **api.js**
 3. Backend tạo background task và trả về `job_id`
 4. Frontend polling `GET /video/jobs/{job_id}` mỗi 2 giây
 5. Background task: **face_detector.py** → **rppg_engine.py** → **signal_processor.py** → lưu vào **history.db**
 6. Frontend nhận kết quả 'done' và hiển thị (VitalSignCard, BVPChart)
 
 ### Real-time Webcam Flow:
-1. **useWebcam.ts** capture frames từ webcam (trong trang **Live.tsx**)
-2. Gửi frames đến backend WebSocket via **useWebSocket.ts**
+1. **useWebcam.js** capture frames từ webcam (trong trang **Live.jsx**)
+2. Gửi frames đến backend WebSocket via **useWebSocket.js**
 3. Backend xử lý real-time, gửi kết quả trở lại via **stream.py**
-4. Frontend hiển thị kết quả real-time trong **Live.tsx**
+4. Frontend hiển thị kết quả real-time trong **Live.jsx**
 5. Khi ngắt kết nối (> 5 giây đo), record tự động được lưu vào **history.db**
 
 ### Chatbot Flow:
-1. User click floating chat button → mở **ChatBot.tsx**
-2. Gửi câu hỏi tới backend via **chatApi.ts** → `POST /chat`
+1. User click floating chat button → mở **ChatBot.jsx**
+2. Gửi câu hỏi tới backend via **chatApi.js** → `POST /chat`
 3. Backend: **engine.py** → FAISS retriever → Gemini LLM → trả lời
 4. Frontend hiển thị trả lời + sources trong chat widget

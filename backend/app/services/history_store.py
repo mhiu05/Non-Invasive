@@ -20,8 +20,20 @@ def init_history_db() -> None:
     conn = _get_conn()
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS users(
+            id TEXT PRIMARY KEY,
+            username TEXT,
+            email TEXT UNIQUE,
+            hashed_password TEXT,
+            created_at TEXT
+        )
+        """
+    )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS history(
             id TEXT PRIMARY KEY,
+            user_id TEXT,
             created_at TEXT,
             type TEXT,
             filename TEXT,
@@ -43,6 +55,11 @@ def init_history_db() -> None:
         )
         """
     )
+    # Check if user_id column exists (for backward compatibility)
+    try:
+        conn.execute("ALTER TABLE history ADD COLUMN user_id TEXT")
+    except sqlite3.OperationalError:
+        pass # Column already exists
     conn.commit()
     conn.close()
 
@@ -50,6 +67,7 @@ def init_history_db() -> None:
 def _row_to_dict(row: sqlite3.Row) -> dict:
     return {
         "id": row["id"],
+        "user_id": row["user_id"] if "user_id" in row.keys() else None,
         "created_at": row["created_at"],
         "type": row["type"],
         "filename": row["filename"],
@@ -75,17 +93,19 @@ def save_history_record(record: dict) -> str:
     history_id = record.get("id") or str(uuid.uuid4())
     created_at = record.get("created_at") or datetime.utcnow().isoformat()
     result_value = record.get("result")
+    user_id = record.get("user_id")
     conn = _get_conn()
     conn.execute(
         """
         INSERT OR REPLACE INTO history(
-            id, created_at, type, filename, session_id, duration_sec,
+            id, user_id, created_at, type, filename, session_id, duration_sec,
             heart_rate, blink_rate, snr_db, age, age_group, bandpass_low_hz,
             bandpass_high_hz, hrv_ms, sdnn_ms, rmssd_ms, pnn50, peak_count, result
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             history_id,
+            user_id,
             created_at,
             record.get("type"),
             record.get("filename"),
@@ -117,11 +137,15 @@ def get_history_list(
     history_type: str | None = None,
     start_at: str | None = None,
     end_at: str | None = None,
+    user_id: str | None = None,
 ) -> list[dict]:
     query = "SELECT * FROM history"
     filters: list[str] = []
     params: list[object] = []
 
+    if user_id is not None:
+        filters.append("user_id = ?")
+        params.append(user_id)
     if history_type is not None:
         filters.append("type = ?")
         params.append(history_type)
@@ -149,6 +173,24 @@ def get_history_by_id(history_id: str) -> dict | None:
     row = conn.execute("SELECT * FROM history WHERE id = ?", (history_id,)).fetchone()
     conn.close()
     return _row_to_dict(row) if row is not None else None
+
+
+def get_user_by_email(email: str) -> dict | None:
+    conn = _get_conn()
+    row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+    return dict(row) if row is not None else None
+
+
+def create_user(user: dict) -> dict:
+    conn = _get_conn()
+    conn.execute(
+        "INSERT INTO users (id, username, email, hashed_password, created_at) VALUES (?, ?, ?, ?, ?)",
+        (user["id"], user["username"], user["email"], user["hashed_password"], user["created_at"])
+    )
+    conn.commit()
+    conn.close()
+    return user
 
 
 # Initialize database when module is imported.

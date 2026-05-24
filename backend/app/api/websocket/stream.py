@@ -36,9 +36,16 @@ router = APIRouter()
 
 
 @router.websocket("/ws/stream")
-async def websocket_stream(ws: WebSocket):
+async def websocket_stream(ws: WebSocket, token: str | None = None):
     await ws.accept()
     logger.info("WebSocket connected: %s", ws.client)
+
+    user_id = None
+    if token:
+        from app.core.security import get_current_user
+        user = get_current_user(token)
+        if user:
+            user_id = user["id"]
 
     if state.engine is None or state.face_detector is None:
         await ws.send_text(json.dumps({"type": "error", "message": "Model not loaded"}))
@@ -206,6 +213,7 @@ async def websocket_stream(ws: WebSocket):
                     "type": "realtime",
                     "session_id": f"ws-{session_id}",
                     "duration_sec": round(duration, 1),
+                    "user_id": user_id,
                     **last_vitals
                 }
                 save_history_record(record)

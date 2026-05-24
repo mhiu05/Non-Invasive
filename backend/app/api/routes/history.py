@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 
 from app.schemas.history import HistoryDetailResponse, HistorySummary
 from app.services.history_store import get_history_by_id, get_history_list
+from app.core.security import get_current_user_required
 
 router = APIRouter()
 
@@ -13,6 +14,7 @@ def get_history(
     type: str | None = Query(None),
     start_at: str | None = Query(None),
     end_at: str | None = Query(None),
+    current_user: dict = Depends(get_current_user_required),
 ):
     return get_history_list(
         limit=limit,
@@ -20,6 +22,7 @@ def get_history(
         history_type=type,
         start_at=start_at,
         end_at=end_at,
+        user_id=current_user["id"],
     )
 
 

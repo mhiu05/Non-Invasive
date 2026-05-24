@@ -8,7 +8,7 @@ from datetime import datetime
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Form, status, Depends
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
@@ -23,6 +23,7 @@ from app.services.signal_processor import (
     get_age_group,
     get_bandpass_by_age,
 )
+from app.core.security import get_current_user
 import app.core.lifespan as state
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,7 @@ def _build_history_payload(
     high_hz: float,
     hrv: dict[str, float | int],
     peak_count: int,
+    user_id: str | None = None,
     extra_result: dict | None = None,
 ) -> dict:
     return {
@@ -106,6 +108,7 @@ def _build_history_payload(
         "rmssd_ms": round(hrv["rmssd_ms"], 2),
         "pnn50": round(hrv["pnn50"], 2),
         "peak_count": peak_count,
+        "user_id": user_id,
         "result": extra_result,
     }
 
@@ -126,6 +129,7 @@ async def upload_video_async(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     age: int | None = Form(None),
+    current_user: dict | None = Depends(get_current_user),
 ):
     if state.engine is None or state.face_detector is None:
         raise HTTPException(503, "Model not loaded yet")
@@ -144,7 +148,8 @@ async def upload_video_async(
 
     job_id = str(uuid.uuid4())
     _create_job_record(job_id, tmp_path)
-    background_tasks.add_task(process_video_job, job_id, tmp_path, file.filename or "unknown", age)
+    user_id = current_user["id"] if current_user else None
+    background_tasks.add_task(process_video_job, job_id, tmp_path, file.filename or "unknown", age, user_id)
 
     return JSONResponse(
         status_code=status.HTTP_202_ACCEPTED,
@@ -152,7 +157,7 @@ async def upload_video_async(
     )
 
 
-def process_video_job(job_id: str, path: str, filename: str, age: int | None) -> None:
+def process_video_job(job_id: str, path: str, filename: str, age: int | None, user_id: str | None = None) -> None:
     conn = _get_conn()
     try:
         _update_job_status(job_id, "running", conn)
@@ -207,6 +212,7 @@ def process_video_job(job_id: str, path: str, filename: str, age: int | None) ->
                 high_hz=high_hz,
                 hrv=hrv,
                 peak_count=int(hrv["peak_count"]),
+                user_id=user_id,
                 extra_result={
                     "total_frames": total_frames,
                     "bvp_length": len(bvp_values),
@@ -249,6 +255,7 @@ def get_video_job(job_id: str):
 async def upload_video(
     file: UploadFile = File(...),
     age: int | None = Form(None),
+    current_user: dict | None = Depends(get_current_user),
 ):
     if state.engine is None or state.face_detector is None:
         raise HTTPException(503, "Model not loaded yet")
@@ -301,6 +308,7 @@ async def upload_video(
             high_hz=high_hz,
             hrv=hrv,
             peak_count=hrv["peak_count"],
+            user_id=current_user["id"] if current_user else None,
             extra_result={
                 "total_frames": total_frames,
                 "bvp_length": len(bvp_values),

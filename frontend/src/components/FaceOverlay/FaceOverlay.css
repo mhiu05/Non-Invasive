@@ -1,0 +1,28 @@
+.face-overlay-wrapper {
+  position: relative;
+}
+
+.face-overlay-video {
+  height: 100%;
+  width: 100%;
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+.face-overlay-canvas {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+}
+
+.face-overlay-noface {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  border-radius: 0.375rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-white);
+}

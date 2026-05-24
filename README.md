@@ -43,7 +43,8 @@ Non-Invasive/
 │   │   ├── core/            # config, lifespan
 │   │   ├── services/        # rppg_engine, face_detector, preprocessor,
 │   │   │                    #   signal_processor, blink_detector, history_store
-│   │   ├── chatbot/         # RAG chatbot: engine, loader, vectorstore
+│   │   ├── chatbot/         # RAG chatbot: engine, loader, vectorstore,
+│   │   │                    #   feedback_store, ingest, auto_update
 │   │   ├── documents/       # Tài liệu cho chatbot học (PDF, .md, .txt)
 │   │   ├── schemas/         # Pydantic models
 │   │   └── api/             # routes + websocket
@@ -53,20 +54,21 @@ Non-Invasive/
 │   ├── tests/               # Unit tests
 │   └── .env
 │
-├── frontend/                # React + TypeScript web app (port 3002)
+├── frontend/                # React + JavaScript web app (port 3002)
 │   ├── src/
-│   │   ├── pages/           # Home (live webcam), Upload (offline video)
+│   │   ├── pages/           # Home (landing), Live (realtime webcam), Upload (offline video)
 │   │   ├── components/      # VitalSignCard, BVPChart, FaceOverlay, ChatBot
 │   │   ├── hooks/           # useWebSocket, useWebcam
-│   │   ├── lib/             # api, chatApi, utils
-│   │   ├── store/           # vitalsStore (Zustand)
-│   │   └── types/           # vitals, chat
+│   │   ├── lib/             # api, chatApi, utils, vitals
+│   │   └── store/           # vitalsStore (Zustand)
 │   └── package.json
 │
 ├── docs/                    # Tài liệu hướng dẫn dự án
 │   ├── ARCHITECTURE.md      # Kiến trúc hệ thống
-│   ├── PLAN.md              # Kế hoạch phát triển
-│   ├── chatbot_plan.md      # Kế hoạch tích hợp chatbot
+│   ├── backend_plan.md      # Kế hoạch cải tiến backend
+│   ├── frontend_plan.md     # Kế hoạch cải tiến frontend
+│   ├── rPPG_plan.md         # Kế hoạch cải tiến rPPG
+│   ├── chatbot_plan.md      # Kế hoạch mở rộng chatbot
 │   ├── deploy.md            # Hướng dẫn deploy
 │   ├── details.md           # Chi tiết từng file
 │   └── convert.md           # Ghi chú convert ONNX
@@ -102,7 +104,7 @@ Dự án áp dụng nhiều kỹ thuật tiên tiến trong Deep Learning, Compu
 
 ### 4. Web Development (Fullstack)
 - **Backend:** `FastAPI` (Python) siêu tốc, hỗ trợ xử lý luồng `WebSocket` bất đồng bộ (`asyncio`) và chạy các mô hình AI nặng trên `ThreadPoolExecutor` để không block event loop. Lưu trữ lịch sử với `SQLite`.
-- **Frontend:** `React 18` + `TypeScript`, build bằng `Vite`. Quản lý state bằng `Zustand`. Giao diện hiện đại với `Tailwind CSS`, hiển thị sóng realtime với `Recharts`.
+- **Frontend:** `React 18` + `JavaScript`, build bằng `Vite`. Quản lý state bằng `Zustand`. Giao diện hiện đại với `Vanilla CSS`, hiển thị sóng realtime với `Recharts`.
 
 ---
 
@@ -172,7 +174,7 @@ cd frontend && npm run dev
 1. Chuyển sang tab **Live** (`/live`).
 2. Click **Start Camera** — trình duyệt hỏi quyền camera.
 3. Nhìn thẳng vào webcam, đủ ánh sáng.
-4. Sau ~12 giây (180 frames @ 15fps), kết quả xuất hiện:
+4. Sau ~6 giây (181 frames @ 30fps), kết quả xuất hiện:
    - **Heart Rate** — nhịp tim (BPM)
    - **Blink Rate** — tốc độ chớp mắt (lần/phút)
    - **Signal SNR** — chất lượng tín hiệu (dB), > 2 dB là tốt
@@ -255,6 +257,32 @@ Metrics: MAE (bpm), RMSE (bpm), MAPE (%), Pearson, SNR (dB).
 }
 ```
 
+### `POST /video/upload-async`
+
+**Request:** `multipart/form-data`, field `file`, optional field `age`
+
+**Response:**
+```json
+{ "job_id": "abc-123", "status": "pending" }
+```
+
+### `GET /video/jobs/{job_id}`
+
+**Response:**
+```json
+{ "id": "abc-123", "status": "done", "result": { ... } }
+```
+
+### `GET /history`
+
+Query params: `type`, `start_at`, `end_at`, `limit`, `offset`
+
+**Response:** Array of history records.
+
+### `GET /history/{id}`
+
+**Response:** Single history record with full details.
+
 ### `POST /chat`
 
 **Request:**
@@ -266,8 +294,27 @@ Metrics: MAE (bpm), RMSE (bpm), MAPE (%), Pearson, SNR (dB).
 ```json
 {
   "answer": "Nhịp tim 95 bpm nằm ở mức cao bình thường...",
-  "sources": ["Medical_book.pdf"]
+  "sources": ["Medical_book.pdf"],
+  "from_internal_docs": true
 }
+```
+
+### `POST /chat/feedback`
+
+**Request:**
+```json
+{
+  "question": "...",
+  "answer": "...",
+  "sources": ["..."],
+  "rating": 5,
+  "comment": "Helpful answer"
+}
+```
+
+**Response:**
+```json
+{ "status": "ok", "saved": true }
 ```
 
 ### `WS /ws/stream`

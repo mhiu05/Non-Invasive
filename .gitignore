@@ -54,7 +54,7 @@ CLAUDE.md
 *.tar.gz
 
 # ── Chatbot vectorstore (generated) ──────────────────────────────
-backend/vectorstore/
+# backend/vectorstore/
 
 # ── Pytest cache ──────────────────────────────────────────────────
 .pytest_cache/

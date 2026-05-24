@@ -9,12 +9,17 @@ from langchain_community.document_loaders import TextLoader, DirectoryLoader, Py
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
-from typing import List
+from typing import List, Optional
 import os
 
 
-def _document_dir(base_dir: str) -> str:
-    return os.path.join(base_dir, "backend", "app", "documents")
+def _document_dir(base_dir: Optional[str] = None) -> str:
+    if base_dir:
+        base_dir = os.path.abspath(base_dir)
+        if os.path.basename(base_dir) == "backend":
+            return os.path.join(base_dir, "app", "documents")
+        return os.path.join(base_dir, "backend", "app", "documents")
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "documents"))
 
 
 def _normalize_source_metadata(doc: Document) -> None:
@@ -29,7 +34,7 @@ def _normalize_source_metadata(doc: Document) -> None:
     doc.metadata = metadata
 
 
-def load_documents(base_dir: str) -> List[Document]:
+def load_documents(base_dir: Optional[str] = None) -> List[Document]:
     """Load all .md, .txt, and .pdf files from documents directory."""
     docs = []
     doc_dir = _document_dir(base_dir)

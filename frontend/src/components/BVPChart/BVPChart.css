@@ -1,0 +1,21 @@
+.bvp-empty {
+  display: flex;
+  height: 8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px dashed var(--color-slate-300);
+}
+
+:root.dark .bvp-empty {
+  border-color: var(--color-slate-700);
+}
+
+.bvp-empty-text {
+  font-size: 0.875rem;
+  color: var(--color-slate-400);
+}
+
+.bvp-container {
+  height: 8rem;
+}

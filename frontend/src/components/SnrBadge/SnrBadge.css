@@ -1,0 +1,47 @@
+.snr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.snr-excellent {
+  background-color: var(--color-emerald-500);
+  color: var(--color-emerald-700);
+  background-color: #d1fae5;
+}
+:root.dark .snr-excellent {
+  background-color: rgba(6, 78, 59, 0.3);
+  color: var(--color-emerald-300);
+}
+
+.snr-good {
+  background-color: #dcfce7;
+  color: var(--color-green-700);
+}
+:root.dark .snr-good {
+  background-color: rgba(20, 83, 45, 0.3);
+  color: var(--color-green-300);
+}
+
+.snr-fair {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+:root.dark .snr-fair {
+  background-color: rgba(120, 53, 15, 0.3);
+  color: #fcd34d;
+}
+
+.snr-poor {
+  background-color: #fee2e2;
+  color: var(--color-red-700);
+}
+:root.dark .snr-poor {
+  background-color: rgba(127, 29, 29, 0.3);
+  color: var(--color-red-300);
+}

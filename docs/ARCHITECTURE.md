@@ -10,9 +10,10 @@ Dự án hiện có ba luồng chính:
 - `WebSocket` realtime: frontend gửi frame webcam đến backend, backend trả về vitals livestream.
 - `HTTP` chatbot: người dùng hỏi câu hỏi, backend dùng RAG (FAISS + Gemini) để trả lời.
 
-Frontend hiện tại có hai trang chính:
+Frontend hiện tại có ba trang chính:
 
-- `Home` cho realtime webcam và phân tích live.
+- `Home` là landing page giới thiệu tính năng và hướng dẫn sử dụng.
+- `Live` cho realtime webcam và phân tích live.
 - `Upload` để upload video offline và xem lịch sử phiên đo.
 
 Chatbot widget hiển thị trên mọi trang (floating button góc phải).
@@ -44,6 +45,7 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 - `GET /history` — lấy danh sách phiên đo đã lưu.
 - `GET /history/{history_id}` — lấy chi tiết record history.
 - `POST /chat` — chatbot RAG (hỏi đáp qua tài liệu nội bộ).
+- `POST /chat/feedback` — lưu phản hồi người dùng về câu trả lời chatbot.
 - `ws://localhost:8001/ws/stream` — WebSocket realtime nhận frame webcam.
 
 ### 2.4 Lưu trữ lịch sử
@@ -70,10 +72,13 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 
 ### 2.7 Chatbot RAG
 
-- Module `backend/app/chatbot/` chứa 3 file chính:
+- Module `backend/app/chatbot/` chứa các file chính:
   - `loader.py` — load tài liệu từ `backend/app/documents/` (PDF, .md, .txt).
   - `vectorstore.py` — build/load FAISS index tại `backend/vectorstore/faiss_index/`.
   - `engine.py` — RAG chain sử dụng Google Gemini (lazy-loaded khi có request đầu tiên).
+  - `feedback_store.py` — thu thập và lưu trữ phản hồi người dùng về câu trả lời chatbot.
+  - `ingest.py` — nạp tài liệu mới vào vectorstore.
+  - `auto_update.py` — tự động cập nhật vectorstore khi tài liệu thay đổi.
 - Tài liệu chatbot được lưu trong `backend/app/documents/` (hiện có `Medical_book.pdf`).
 - Script `backend/scripts/build_embeddings.py` chạy 1 lần để build vectorstore.
 - Endpoint `POST /chat` nhận câu hỏi và trả lời dựa trên tài liệu nội bộ.
@@ -108,39 +113,39 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 
 ## 4. Kiến trúc frontend
 
-- `frontend` là ứng dụng React + Vite + TypeScript.
-- `Home` page là giao diện realtime webcam và vitals live.
+- `frontend` là ứng dụng React + Vite + JavaScript (sử dụng CSS Modules).
+- `Home` page là landing page giới thiệu tính năng, giải thích các chỉ số sức khỏe và hướng dẫn sử dụng.
+- `Live` page là giao diện đo realtime qua webcam và WebSocket, hiển thị:
+  - luồng webcam với bounding box khuôn mặt,
+  - kết quả vitals real-time (HR, Blink, SNR, HRV),
+  - biểu đồ sóng BVP,
+  - phần history nhúng trực tiếp.
 - `Upload` page là trung tâm UX offline, hiển thị:
-  - video upload,
+  - video upload (async processing),
   - tuổi người dùng,
-  - trạng thái xử lý,
+  - trạng thái xử lý (polling job),
   - kết quả HR / Blink / SNR / HRV,
   - export CSV BVP signal,
   - phần history nhúng trực tiếp.
 - `ChatBot` component — widget chat floating trên mọi trang, gọi `POST /chat`.
-- `frontend/src/lib/api.ts` cung cấp API client:
-  - `uploadVideo()` → `POST /video/upload`.
+- `frontend/src/lib/api.js` cung cấp API client:
+  - `uploadVideoAsync()` → `POST /video/upload-async` (upload bất đồng bộ).
+  - `getJobStatus()` → `GET /video/jobs/{job_id}` (polling trạng thái job).
   - `fetchHistory()` → `GET /history`.
-- `frontend/src/lib/chatApi.ts` cung cấp chatbot client:
+- `frontend/src/lib/chatApi.js` cung cấp chatbot client:
   - `sendChatMessage()` → `POST /chat`.
-- `frontend/src/hooks/useWebSocket.ts` và `frontend/src/hooks/useWebcam.ts` cung cấp realtime webcam/WebSocket logic.
-- `frontend/src/types/vitals.ts` định nghĩa các kiểu dữ liệu `VideoResult` và `HistoryRecord`.
-- `frontend/src/types/chat.ts` định nghĩa `ChatMessage` và `ChatResponse`.
+- `frontend/src/hooks/useWebSocket.js` và `frontend/src/hooks/useWebcam.js` cung cấp realtime webcam/WebSocket logic.
+- `frontend/src/lib/vitals.js` chứa các hàm xử lý hiển thị chất lượng tín hiệu SNR.
 
 ## 5. Thực trạng hiện tại
 
-- History persistence đã được triển khai cho đo video offline; realtime session chưa được lưu vào lịch sử.
+- History persistence đã được triển khai đầy đủ cho cả đo video offline và phiên đo realtime qua webcam. WebSocket `stream.py` tự động lưu phiên realtime vào lịch sử khi kết thúc (nếu duration > 5 giây).
 - Frontend có `Home` page realtime dùng webcam/WebSocket và `Upload` page cho upload video offline + lịch sử.
 - Lịch sử được hiển thị ngay trong trang `Upload`, không còn route lịch sử riêng biệt.
-- Chatbot RAG đã tích hợp hoàn chỉnh (backend + frontend), sử dụng Google Gemini và FAISS.
-- Backend vẫn sử dụng `BackgroundTasks` cho upload async, nên job recovery khi server khởi động lại còn hạn chế.
-- Frontend hiện chỉ dùng upload đồng bộ trên `Upload`; endpoint `POST /video/upload-async` tồn tại nhưng chưa được sử dụng.
-- Chưa có cơ chế người dùng đăng nhập, chưa phân biệt nhiều người dùng.
+- Chatbot RAG đã tích hợp hoàn chỉnh (backend + frontend), sử dụng Google Gemini và FAISS. Ngoài ra có module `feedback_store.py` thu thập phản hồi, `ingest.py` nạp tài liệu, và `auto_update.py` tự động cập nhật vectorstore.
+- Frontend `Upload` sử dụng `uploadVideoAsync()` để upload bất đồng bộ và `getJobStatus()` để polling trạng thái job cho đến khi hoàn thành.
 
 ## 6. Hạn chế kiến trúc
-
-- `video_jobs.db` chỉ lưu trạng thái job cùng process; restart server không có retry tự động.
-- `history.db` chỉ lưu record offline video; realtime session chưa đưa vào history.
-- WebSocket frame processing có thể bị chậm nếu model inference chưa được tối ưu.
-- Chưa có caching hoặc giới hạn truy xuất lịch sử cho frontend.
 - Chatbot vectorstore cần rebuild thủ công khi tài liệu thay đổi.
+- Chưa có cơ chế người dùng đăng nhập, chưa phân biệt nhiều người dùng.
+- Backend sử dụng `BackgroundTasks` cho async jobs, job recovery khi restart còn hạn chế.

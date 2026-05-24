@@ -1,0 +1,8 @@
+.app-container {
+  min-height: 100vh;
+  background-color: var(--color-slate-50);
+}
+
+:root.dark .app-container {
+  background-color: var(--color-slate-900);
+}
