@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Model
-    model_path: str = "weights/PURE_DeepPhys.onnx"
+    model_path: str = "weights/UBFC-rPPG_FactorizePhys_FSAM_Res.onnx"
     model_config_path: str = "weights/model_config.json"
     device: str = "cpu"  # "cpu" hoặc "cuda:0"
 
