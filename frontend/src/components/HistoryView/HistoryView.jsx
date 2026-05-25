@@ -60,7 +60,6 @@ export function HistoryView({ onBack }) {
               <DetailRow label="File" value={selectedRecord.filename ?? '—'} />
               <DetailRow label="Thời lượng" value={selectedRecord.duration_sec ? `${selectedRecord.duration_sec}s` : '—'} />
               <DetailRow label="Heart Rate" value={selectedRecord.heart_rate?.toFixed(1) ?? '—'} unit="BPM" />
-              <DetailRow label="Blink Rate" value={selectedRecord.blink_rate?.toFixed(1) ?? '—'} unit="bl/min" />
               <DetailRow label="SNR" value={selectedRecord.snr_db?.toFixed(1) ?? '—'} unit="dB" badge={<SnrBadge snr={selectedRecord.snr_db} />} />
               <DetailRow label="Nhóm tuổi" value={selectedRecord.age_group ?? '—'} />
               <DetailRow label="Tuổi" value={selectedRecord.age?.toString() ?? '—'} />
@@ -139,7 +138,6 @@ export function HistoryView({ onBack }) {
                   <th>Loại</th>
                   <th>File / Session</th>
                   <th>HR</th>
-                  <th>Blink</th>
                   <th>SNR</th>
                   <th>HRV</th>
                   <th>Thời lượng</th>
@@ -155,7 +153,6 @@ export function HistoryView({ onBack }) {
                     <td className="history-td history-td-type">{r.type === 'video' ? 'Video' : 'Realtime'}</td>
                     <td className="history-td history-td-file">{r.filename ?? r.session_id ?? '—'}</td>
                     <td className="history-td history-td-value">{r.heart_rate?.toFixed(1) ?? '—'}</td>
-                    <td className="history-td history-td-value">{r.blink_rate?.toFixed(1) ?? '—'}</td>
                     <td className="history-td"><SnrBadge snr={r.snr_db} /></td>
                     <td className="history-td history-td-value">{r.hrv_ms?.toFixed(1) ?? '—'}</td>
                     <td className="history-td history-td-value">{r.duration_sec ? `${r.duration_sec}s` : '—'}</td>

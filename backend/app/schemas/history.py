@@ -10,7 +10,6 @@ class HistorySummary(BaseModel):
     session_id: str | None = None
     duration_sec: float | None = None
     heart_rate: float | None = None
-    blink_rate: float | None = None
     snr_db: float | None = None
     age: int | None = None
     age_group: str | None = None

@@ -28,7 +28,6 @@ export function useWebSocket(getAge) {
       if (msg.type === 'vitals') {
         setVitals(
           msg.heart_rate,
-          msg.blink_rate,
           msg.snr_db,
           msg.hrv_ms ?? null,
           msg.bvp_window,

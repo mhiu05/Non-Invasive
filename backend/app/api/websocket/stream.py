@@ -5,7 +5,7 @@ Protocol:
   Client → Server: {"type": "frame", "data": "<base64 JPEG>"}
   Client → Server: {"type": "reset"}
   Server → Client: {"type": "face", "detected": true, "bbox": [x,y,w,h]}
-  Server → Client: {"type": "vitals", "heart_rate": 72.5, "blink_rate": 14.1,
+  Server → Client: {"type": "vitals", "heart_rate": 72.5,
                      "snr_db": 8.3, "bvp_window": [...]}
   Server → Client: {"type": "error", "message": "..."}
 """
@@ -20,7 +20,7 @@ import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.core.config import settings
-from app.services.blink_detector import BlinkDetector
+
 from app.services.rppg_engine import SessionState
 from app.services.signal_processor import (
     compute_heart_rate,
@@ -58,11 +58,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
     last_vitals = None
 
     sess = SessionState(state.engine, fps=settings.fps)
-    blink = BlinkDetector(
-        fps=settings.fps,
-        low_hz=settings.blink_low_hz,
-        high_hz=settings.blink_high_hz,
-    )
 
     while True:
         # ── nhận message ──────────────────────────────────────────
@@ -83,7 +78,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
 
         if msg.get("type") == "reset":
             sess.reset()
-            blink.reset()
             continue
 
         if msg.get("type") != "frame":
@@ -106,7 +100,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
             if bbox is None:
                 # Nếu mất mặt -> reset session ngay lập tức để không tính HR từ background tường nhà
                 sess.reset()
-                blink.reset()
                 await ws.send_text(json.dumps({
                     "type": "face",
                     "detected": False,
@@ -115,7 +108,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
                 await ws.send_text(json.dumps({
                     "type": "vitals",
                     "heart_rate": None,
-                    "blink_rate": None,
                     "snr_db": None,
                     "bvp_window": [],
                     "buffer_frames": 0,
@@ -124,7 +116,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
                 continue
 
             # Nếu có mặt thì mới push vào rPPG
-            blink.push(frame, bbox)
 
             if isinstance(msg.get('age'), int) and msg['age'] >= 0:
                 sess.age = msg['age']
@@ -161,7 +152,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
                 
                 last_vitals = {
                     "heart_rate": round(hr, 1),
-                    "blink_rate": round(blink.get_rate(), 1),
                     "snr_db": round(snr, 2),
                     "age": sess.age,
                     "age_group": get_age_group(sess.age),
@@ -187,7 +177,6 @@ async def websocket_stream(ws: WebSocket, token: str | None = None):
                 await ws.send_text(json.dumps({
                     "type": "vitals",
                     "heart_rate": None,
-                    "blink_rate": round(blink.get_rate(), 1),
                     "snr_db": None,
                     "bvp_window": [],
                     "buffer_frames": len(partial),

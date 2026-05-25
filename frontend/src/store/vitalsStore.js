@@ -3,7 +3,6 @@ import { create } from 'zustand'
 // Store quản lý trạng thái toàn cục (global state) cho các chỉ số sức khỏe realtime
 export const useVitalsStore = create((set) => ({
   heartRate: null,
-  blinkRate: null,
   snrDb: null,
   hrvMs: null,
   bvpWindow: [],      // Cửa sổ tín hiệu BVP để vẽ biểu đồ
@@ -14,8 +13,8 @@ export const useVitalsStore = create((set) => ({
   isConnected: false, // Trạng thái kết nối WebSocket
 
   // Cập nhật các chỉ số sinh tồn chính
-  setVitals: (heartRate, blinkRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded) =>
-    set({ heartRate, blinkRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded }),
+  setVitals: (heartRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded) =>
+    set({ heartRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded }),
     
   // Cập nhật trạng thái nhận diện khuôn mặt
   setFace: (faceDetected, faceBbox) => set({ faceDetected, faceBbox }),
@@ -27,7 +26,6 @@ export const useVitalsStore = create((set) => ({
   reset: () =>
     set({
       heartRate: null,
-      blinkRate: null,
       snrDb: null,
       hrvMs: null,
       bvpWindow: [],

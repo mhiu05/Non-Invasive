@@ -1,8 +1,10 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=os.path.join(_backend_dir, ".env"), env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "Non-Invasive Health API"
     debug: bool = False
@@ -17,8 +19,6 @@ class Settings(BaseSettings):
     buffer_size: int = 180  # số frames tích lũy trước khi tính HR
     hr_low_hz: float = 0.75  # 45 BPM
     hr_high_hz: float = 2.5  # 150 BPM
-    blink_low_hz: float = 0.1
-    blink_high_hz: float = 0.9
 
     # Upload
     max_upload_mb: int = 100

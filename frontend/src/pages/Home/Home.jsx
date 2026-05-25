@@ -19,7 +19,7 @@ export function Home() {
           </span>
         </h1>
         <p className="hero-subtitle">
-          Hệ thống phân tích video khuôn mặt để trích xuất các chỉ số sinh tồn như nhịp tim, nhịp chớp mắt và biến thiên nhịp tim (HRV) hoàn toàn không xâm lấn.
+          Hệ thống phân tích video khuôn mặt để trích xuất các chỉ số sinh tồn như nhịp tim và biến thiên nhịp tim (HRV) hoàn toàn không xâm lấn.
         </p>
         <div className="hero-actions">
           {/* Nút chuyển đến trang đo lường Live */}
@@ -97,12 +97,7 @@ export function Home() {
             desc="Nhịp tim trung bình. Người trưởng thành bình thường lúc nghỉ ngơi thường có nhịp tim từ 60 đến 100 nhịp/phút."
             color="red"
           />
-          <MetricCard
-            title="Blink Rate"
-            unit="Lần/phút"
-            desc="Tần suất chớp mắt. Chớp mắt giúp làm ẩm và bảo vệ mắt. Trung bình người trưởng thành chớp mắt 10-20 lần mỗi phút."
-            color="blue"
-          />
+
           <MetricCard
             title="Signal SNR (dB)"
             unit="Decibel"

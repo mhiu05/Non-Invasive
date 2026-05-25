@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { fetchHistory } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
-import { Activity, Heart, Eye, Activity as Signal, User, Clock, Calendar } from 'lucide-react'
+import { Activity, Heart, Activity as Signal, User, Clock, Calendar } from 'lucide-react'
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend
 } from 'recharts'
@@ -141,15 +141,7 @@ export function Profile() {
             </div>
           </div>
 
-          <div className="stat-card glass-panel">
-            <div className="stat-header">
-              <Eye className="stat-icon blink-icon" />
-              <h3>Chớp mắt</h3>
-            </div>
-            <div className="stat-value">
-              {Math.round(latestStats.blink_rate)} <span>lần/p</span>
-            </div>
-          </div>
+
 
           {/* Charts */}
           <div className="chart-section glass-panel">

@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CheckCircle2, Download, Eye, FileVideo, Heart, Loader2, Radio, Upload as UploadIcon } from 'lucide-react'
+import { Activity, AlertTriangle, CheckCircle2, Download, FileVideo, Heart, Loader2, Radio, Upload as UploadIcon } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { BVPChart } from '@/components/BVPChart/BVPChart'
 import { VitalSignCard } from '@/components/VitalSignCard/VitalSignCard'
@@ -109,7 +109,7 @@ export function Upload() {
           <div className="upload-header">
             <div>
               <h2 className="upload-title">Offline Video Analysis</h2>
-              <p className="upload-subtitle">Upload video (async) để phân tích nhịp tim, blink rate, HRV.</p>
+              <p className="upload-subtitle">Upload video (async) để phân tích nhịp tim, HRV.</p>
             </div>
             <button type="button" onClick={() => setShowHistory(true)} className="upload-history-btn">
               Xem lịch sử
@@ -212,7 +212,6 @@ export function Upload() {
               {/* Các thông số cơ bản */}
               <div className="upload-vitals-grid">
                 <VitalSignCard icon={Heart}    label="Heart Rate"  value={result.heart_rate} unit="BPM"    color="red" />
-                <VitalSignCard icon={Eye}      label="Blink Rate"  value={result.blink_rate} unit="bl/min" color="blue" />
                 <VitalSignCard icon={Activity} label="Signal SNR"  value={result.snr_db}     unit="dB"     color="green" />
                 <VitalSignCard icon={Radio}    label="HRV (RMSSD)" value={result.hrv_ms ?? result.rmssd_ms ?? null} unit="ms" color="purple" />
               </div>

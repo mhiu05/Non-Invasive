@@ -74,7 +74,6 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "session_id": row["session_id"],
         "duration_sec": row["duration_sec"],
         "heart_rate": row["heart_rate"],
-        "blink_rate": row["blink_rate"],
         "snr_db": row["snr_db"],
         "age": row["age"],
         "age_group": row["age_group"],
@@ -99,9 +98,9 @@ def save_history_record(record: dict) -> str:
         """
         INSERT OR REPLACE INTO history(
             id, user_id, created_at, type, filename, session_id, duration_sec,
-            heart_rate, blink_rate, snr_db, age, age_group, bandpass_low_hz,
+            heart_rate, snr_db, age, age_group, bandpass_low_hz,
             bandpass_high_hz, hrv_ms, sdnn_ms, rmssd_ms, pnn50, peak_count, result
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             history_id,
@@ -112,7 +111,6 @@ def save_history_record(record: dict) -> str:
             record.get("session_id"),
             record.get("duration_sec"),
             record.get("heart_rate"),
-            record.get("blink_rate"),
             record.get("snr_db"),
             record.get("age"),
             record.get("age_group"),

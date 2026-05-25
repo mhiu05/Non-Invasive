@@ -11,7 +11,6 @@ class FaceMessage(BaseModel):
 class VitalsMessage(BaseModel):
     type: str = "vitals"
     heart_rate: float
-    blink_rate: float
     snr_db: float
     bvp_window: list[float] = []  # last N BVP values for chart
     age: int | None = None
@@ -41,7 +40,6 @@ class VideoResultResponse(BaseModel):
     total_frames: int
     duration_sec: float
     heart_rate: float
-    blink_rate: float
     snr_db: float
     bvp_signal: list[float]
     age: int | None = None

@@ -1,4 +1,4 @@
-import { Activity, Eye, Heart, Radio, StopCircle, Video, History } from 'lucide-react'
+import { Activity, Heart, Radio, StopCircle, Video, History } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { BVPChart } from '@/components/BVPChart/BVPChart'
 import { FaceOverlay } from '@/components/FaceOverlay/FaceOverlay'
@@ -12,13 +12,12 @@ import './Live.css'
 // Component Live xử lý việc đo lường các chỉ số sinh tồn trực tiếp từ Webcam
 export function Live() {
   // Lấy các state toàn cục (thông số, buffer, face bounding box...) từ zustand store
-  const { heartRate, blinkRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded, faceBbox, faceDetected, isConnected, reset } =
+  const { heartRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded, faceBbox, faceDetected, isConnected, reset } =
     useVitalsStore()
   
   // State quản lý độ tuổi nhập vào và các state hiển thị (đã được làm mượt)
   const [age, setAge] = useState(undefined)
   const [displayHeartRate, setDisplayHeartRate] = useState(null)
-  const [displayBlinkRate, setDisplayBlinkRate] = useState(null)
   const [displaySnrDb, setDisplaySnrDb] = useState(null)
   const [displayHrvMs, setDisplayHrvMs] = useState(null)
   
@@ -71,25 +70,7 @@ export function Live() {
     return () => { active = false }
   }, [heartRate])
 
-  // Hook làm mượt hiển thị cho giá trị Blink Rate
-  useEffect(() => {
-    if (blinkRate === null) {
-      setDisplayBlinkRate(null)
-      return
-    }
-    let active = true
-    const step = () => {
-      setDisplayBlinkRate((prev) => {
-        if (prev === null) return blinkRate
-        const next = prev + (blinkRate - prev) * smoothingFactor
-        if (Math.abs(next - blinkRate) < smoothingThreshold) return blinkRate
-        return next
-      })
-      if (active) window.setTimeout(step, smoothingIntervalMs)
-    }
-    step()
-    return () => { active = false }
-  }, [blinkRate])
+
 
   // Hook làm mượt hiển thị cho giá trị SNR
   useEffect(() => {
@@ -224,7 +205,6 @@ export function Live() {
 
           <div className="live-vitals-grid">
             <VitalSignCard icon={Heart}    label="Heart Rate"     value={displayHeartRate}  unit="BPM"     color="red"    />
-            <VitalSignCard icon={Eye}      label="Blink Rate"     value={displayBlinkRate}  unit="bl/min"  color="blue"   />
             <VitalSignCard icon={Activity} label="Signal SNR"     value={displaySnrDb}      unit="dB"      color="green"  />
             <VitalSignCard icon={Radio}    label="HRV (RMSSD)"    value={displayHrvMs}      unit="ms"      color="purple" />
           </div>

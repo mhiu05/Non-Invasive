@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.schemas.vitals import VideoResultResponse
-from app.services.blink_detector import BlinkDetector
+
 from app.services.history_store import save_history_record
 from app.services.rppg_engine import SessionState
 from app.services.signal_processor import (
@@ -80,7 +80,6 @@ def _build_history_payload(
     filename: str,
     duration_sec: float,
     heart_rate: float,
-    blink_rate: float,
     snr_db: float,
     age: int | None,
     age_group: str,
@@ -97,7 +96,6 @@ def _build_history_payload(
         "session_id": None,
         "duration_sec": round(duration_sec, 2),
         "heart_rate": round(heart_rate, 2),
-        "blink_rate": round(blink_rate, 2),
         "snr_db": round(snr_db, 2),
         "age": age,
         "age_group": age_group,
@@ -163,7 +161,7 @@ def process_video_job(job_id: str, path: str, filename: str, age: int | None, us
         _update_job_status(job_id, "running", conn)
         conn.commit()
 
-        bvp_values, blink_rate, total_frames = _process_video(path)
+        bvp_values, total_frames = _process_video(path)
         if len(bvp_values) < 30:
             raise RuntimeError("Video quá ngắn hoặc không phát hiện được mặt")
 
@@ -185,7 +183,6 @@ def process_video_job(job_id: str, path: str, filename: str, age: int | None, us
             "total_frames": total_frames,
             "duration_sec": round(duration_sec, 2),
             "heart_rate": round(heart_rate, 2),
-            "blink_rate": round(blink_rate, 2),
             "snr_db": round(snr_db, 2),
             "bvp_signal": [round(float(v), 4) for v in bvp_values],
             "age": age,
@@ -204,7 +201,6 @@ def process_video_job(job_id: str, path: str, filename: str, age: int | None, us
                 filename=filename,
                 duration_sec=duration_sec,
                 heart_rate=heart_rate,
-                blink_rate=blink_rate,
                 snr_db=snr_db,
                 age=age,
                 age_group=age_group,
@@ -274,7 +270,7 @@ async def upload_video(
         tmp_path = tmp.name
 
     try:
-        bvp_values, blink_rate, total_frames = _process_video(tmp_path)
+        bvp_values, total_frames = _process_video(tmp_path)
     finally:
         os.unlink(tmp_path)
 
@@ -300,7 +296,6 @@ async def upload_video(
             filename=file.filename or "unknown",
             duration_sec=duration_sec,
             heart_rate=heart_rate,
-            blink_rate=blink_rate,
             snr_db=snr_db,
             age=age,
             age_group=age_group,
@@ -321,7 +316,6 @@ async def upload_video(
         total_frames=total_frames,
         duration_sec=round(duration_sec, 2),
         heart_rate=round(heart_rate, 2),
-        blink_rate=round(blink_rate, 2),
         snr_db=round(snr_db, 2),
         bvp_signal=[round(v, 4) for v in bvp_values],
         age=age,
@@ -336,14 +330,13 @@ async def upload_video(
     )
 
 
-def _process_video(path: str) -> tuple[list[float], float, int]:
-    """Đọc video, chạy inference từng frame. Trả (bvp_values, blink_rate, n_frames)."""
+def _process_video(path: str) -> tuple[list[float], int]:
+    """Đọc video, chạy inference từng frame. Trả (bvp_values, n_frames)."""
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         raise HTTPException(422, "Không mở được file video")
 
     sess = SessionState(state.engine, fps=settings.fps)
-    blink = BlinkDetector(fps=settings.fps)
     bvp_values: list[float] = []
     total_frames = 0
 
@@ -354,7 +347,6 @@ def _process_video(path: str) -> tuple[list[float], float, int]:
         total_frames += 1
 
         crop, bbox = state.face_detector.crop_resize(frame, state.engine.img_size)
-        blink.push(frame, bbox)
 
         result = sess.push_frame(crop)
         if result is not None:
@@ -362,4 +354,4 @@ def _process_video(path: str) -> tuple[list[float], float, int]:
             sess.reset()  # reset buffer, tiếp tục tích lũy
 
     cap.release()
-    return bvp_values, blink.get_rate(), total_frames
+    return bvp_values, total_frames

@@ -89,7 +89,7 @@ def test_history_store_save_and_query(tmp_path, monkeypatch):
         "filename": "test.mp4",
         "duration_sec": 1.5,
         "heart_rate": 72.0,
-        "blink_rate": 14.0,
+
         "snr_db": 5.0,
         "age": 30,
         "age_group": ">= 8 tuổi",
@@ -145,7 +145,7 @@ def test_history_endpoint_returns_saved_records(tmp_path, monkeypatch):
         "filename": "history_test.mp4",
         "duration_sec": 2.5,
         "heart_rate": 75.0,
-        "blink_rate": 12.0,
+
         "snr_db": 4.5,
         "age": 28,
         "age_group": ">= 8 tuổi",
