@@ -13,7 +13,7 @@
 ### Components (`src/components/`)
 Chứa các React components tái sử dụng (mỗi component nằm trong một thư mục chứa `.jsx` và `.css`):
 - **Header/** - Component header/navbar của ứng dụng
-- **VitalSignCard/** - Card hiển thị chỉ số sức khỏe (nhịp tim, blink rate, SNR)
+- **VitalSignCard/** - Card hiển thị chỉ số sức khỏe (nhịp tim, SNR)
 - **BVPChart/** - Biểu đồ hiển thị dữ liệu Blood Volume Pulse
 - **FaceOverlay/** - Overlay để vẽ bounding box khuôn mặt lên video
 - **ChatBot/** - Widget chatbot AI (floating button + modal chat)
@@ -73,17 +73,17 @@ Cấu hình và thiết lập core:
 Logic xử lý chính:
 - **rppg_engine.py** - Engine chính xử lý rPPG (ONNX + PyTorch fallback)
 - **face_detector.py** - Detect khuôn mặt bằng MediaPipe Face Mesh
-- **blink_detector.py** - Detect chuyển động mắt/blink rate
+
 - **preprocessor.py** - Tiền xử lý video (resize, normalize)
 - **signal_processor.py** - Xử lý tín hiệu (bandpass, FFT, HRV, SNR)
 - **history_store.py** - Quản lý SQLite history.db (CRUD lịch sử đo)
 
 ### Chatbot (`app/chatbot/`)
-Module RAG chatbot:
+Module Advanced RAG chatbot:
 - **__init__.py** - Khởi tạo package
 - **loader.py** - Load tài liệu PDF/Markdown/Text từ `app/documents/`
-- **vectorstore.py** - Build/load FAISS vector index
-- **engine.py** - RAG chain (Google Gemini + FAISS retriever, lazy-loaded)
+- **vectorstore.py** - Build/load FAISS (Dense) và BM25 (Sparse) index
+- **engine.py** - Advanced RAG chain kết hợp Query Rewriting, Hybrid Search, và Re-ranking (Google Gemini, lazy-loaded)
 - **feedback_store.py** - Lưu trữ feedback người dùng (câu hỏi, câu trả lời, rating)
 - **ingest.py** - Ingest nội dung mới vào kho tài liệu `app/documents/`
 - **auto_update.py** - Helper rebuild vectorstore index cho automation

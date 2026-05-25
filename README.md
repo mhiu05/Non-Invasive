@@ -6,7 +6,7 @@ Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt —
 webcam / video  →  face detection (MediaPipe)
                →  rPPG inference (ONNX hoặc PyTorch fallback)
                →  signal processing (FFT)
-               →  Heart Rate, Blink Rate, SNR, HRV
+               →  Heart Rate, SNR, HRV
                →  AI Chatbot (RAG + Gemini) hỗ trợ tư vấn
 ```
 
@@ -42,7 +42,7 @@ Non-Invasive/
 │   ├── app/
 │   │   ├── core/            # config, lifespan
 │   │   ├── services/        # rppg_engine, face_detector, preprocessor,
-│   │   │                    #   signal_processor, blink_detector, history_store
+│   │   │                    #   signal_processor, history_store
 │   │   ├── chatbot/         # RAG chatbot: engine, loader, vectorstore,
 │   │   │                    #   feedback_store, ingest, auto_update
 │   │   ├── documents/       # Tài liệu cho chatbot học (PDF, .md, .txt)
@@ -97,10 +97,13 @@ Dự án áp dụng nhiều kỹ thuật tiên tiến trong Deep Learning, Compu
 
 ### 3. Generative AI & NLP (RAG Pipeline)
 - **Large Language Model (LLM):** Sử dụng **Google Gemini 2.5 Flash** để tư vấn sức khỏe dựa trên kết quả rPPG.
-- **Retrieval-Augmented Generation (RAG):**
+- **Retrieval-Augmented Generation (Advanced RAG):**
   - **Embeddings:** `Google Generative AI Embeddings` để chuyển đổi tài liệu y khoa thành vector.
-  - **Vector Database:** `FAISS` (Facebook AI Similarity Search) để lưu trữ và truy xuất ngữ cảnh liên quan cực nhanh.
-  - **Orchestration:** `LangChain` kết nối Vector Store và LLM, tạo ra chuỗi (chain) hỏi đáp có độ chính xác cao, hạn chế hallucination.
+  - **Vector Database:** `FAISS` (Facebook AI Similarity Search) lưu trữ vector và `BM25` lưu trữ từ khóa.
+  - **Hybrid Search:** Kết hợp tìm kiếm theo ngữ nghĩa (Dense Retrieval qua FAISS) và tìm kiếm theo từ khóa (Sparse Retrieval qua BM25).
+  - **Query Rewriting:** Sử dụng `MultiQueryRetriever` (LangChain) để tự động viết lại và mở rộng câu hỏi của người dùng.
+  - **Re-ranking:** Tích hợp mô hình Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) để chấm điểm và sắp xếp lại văn bản truy xuất nhằm chọn lọc ra kết quả chính xác nhất.
+  - **Orchestration:** `LangChain` kết nối toàn bộ pipeline, tạo ra chuỗi (chain) hỏi đáp có độ chính xác cao, hạn chế tối đa hallucination.
 
 ### 4. Web Development (Fullstack)
 - **Backend:** `FastAPI` (Python) siêu tốc, hỗ trợ xử lý luồng `WebSocket` bất đồng bộ (`asyncio`) và chạy các mô hình AI nặng trên `ThreadPoolExecutor` để không block event loop. Lưu trữ lịch sử với `SQLite`.
@@ -110,25 +113,21 @@ Dự án áp dụng nhiều kỹ thuật tiên tiến trong Deep Learning, Compu
 
 ## 🚀 Chạy hệ thống
 
-### Bước 1 — Chạy Backend
+### Bước 0 — Build chatbot vectorstore (1 lần)
+
+```bash
+cd backend
+python scripts/build_embeddings.py
+```
+
+### Bước 1 — Chạy Backend (terminal 1)
 
 ```bash
 cd backend
 python -m uvicorn app.main:app --reload --port 8001
 ```
 
-Startup thành công:
-```
-INFO  Loading ONNX model from: weights/PURE_DeepPhys.onnx
-INFO  ONNX backend | PURE_DeepPhys.onnx | img_size=72 | buffer=180
-INFO  Startup complete.
-```
-
-Kiểm tra:
-- `http://localhost:8001/health` → `{"status":"ok","model_loaded":true}`
-- `http://localhost:8001/docs` → Swagger UI
-
-### Bước 2 — Chạy Frontend
+### Bước 2 — Chạy Frontend (terminal 2)
 
 ```bash
 cd frontend
@@ -139,27 +138,6 @@ npm run dev
 Mở trình duyệt: `http://localhost:3002`
 
 > Lưu ý: frontend dev server chạy trên cổng `3002` theo cấu hình `frontend/vite.config.ts`.
-
-### Bước 3 — Build chatbot vectorstore (lần đầu)
-
-```bash
-cd backend
-python scripts/build_embeddings.py
-```
-
-> Chỉ cần chạy lần đầu hoặc khi cập nhật tài liệu trong `backend/app/documents/`.
-
-### Chạy song song
-
-**Terminal 1:**
-```bash
-cd backend && python -m uvicorn app.main:app --reload --port 8001
-```
-
-**Terminal 2:**
-```bash
-cd frontend && npm run dev
-```
 
 ---
 
@@ -176,7 +154,7 @@ cd frontend && npm run dev
 3. Nhìn thẳng vào webcam, đủ ánh sáng.
 4. Sau ~6 giây (181 frames @ 30fps), kết quả xuất hiện:
    - **Heart Rate** — nhịp tim (BPM)
-   - **Blink Rate** — tốc độ chớp mắt (lần/phút)
+
    - **Signal SNR** — chất lượng tín hiệu (dB), > 2 dB là tốt
    - **BVP chart** — dạng sóng mạch máu real-time
 5. Click **Stop** để dừng. Phiên đo (nếu > 5s) sẽ tự động lưu vào Lịch sử.
@@ -224,119 +202,12 @@ Metrics: MAE (bpm), RMSE (bpm), MAPE (%), Pearson, SNR (dB).
 | Chuyển động đầu | FactorizePhys | ~0.83 bpm |
 | Nói chuyện | EfficientPhys | ~1.67 bpm |
 
----
-
-## API Reference
-
-### `GET /health`
-```json
-{ "status": "ok", "model_loaded": true, "device": "cpu" }
-```
-
-### `POST /video/upload`
-
-**Request:** `multipart/form-data`, field `file`, optional field `age`
-
-**Response:**
-```json
-{
-  "filename": "test.mp4",
-  "total_frames": 900,
-  "duration_sec": 30.0,
-  "heart_rate": 72.5,
-  "blink_rate": 14.1,
-  "snr_db": 8.3,
-  "bvp_signal": [0.012, -0.005, "..."],
-  "age": 25,
-  "age_group": "adult",
-  "hrv_ms": 45.2,
-  "sdnn_ms": 38.5,
-  "rmssd_ms": 42.1,
-  "pnn50": 15.3,
-  "peak_count": 35
-}
-```
-
-### `POST /video/upload-async`
-
-**Request:** `multipart/form-data`, field `file`, optional field `age`
-
-**Response:**
-```json
-{ "job_id": "abc-123", "status": "pending" }
-```
-
-### `GET /video/jobs/{job_id}`
-
-**Response:**
-```json
-{ "id": "abc-123", "status": "done", "result": { ... } }
-```
-
-### `GET /history`
-
-Query params: `type`, `start_at`, `end_at`, `limit`, `offset`
-
-**Response:** Array of history records.
-
-### `GET /history/{id}`
-
-**Response:** Single history record with full details.
-
-### `POST /chat`
-
-**Request:**
-```json
-{ "question": "Nhịp tim 95 bpm có bình thường không?" }
-```
-
-**Response:**
-```json
-{
-  "answer": "Nhịp tim 95 bpm nằm ở mức cao bình thường...",
-  "sources": ["Medical_book.pdf"],
-  "from_internal_docs": true
-}
-```
-
-### `POST /chat/feedback`
-
-**Request:**
-```json
-{
-  "question": "...",
-  "answer": "...",
-  "sources": ["..."],
-  "rating": 5,
-  "comment": "Helpful answer"
-}
-```
-
-**Response:**
-```json
-{ "status": "ok", "saved": true }
-```
-
-### `WS /ws/stream`
-
-```json
-// Client → Server
-{ "type": "frame", "data": "<base64 JPEG>" }
-{ "type": "reset" }
-
-// Server → Client
-{ "type": "face", "detected": true, "bbox": [x, y, w, h] }
-{ "type": "vitals", "heart_rate": 72.5, "blink_rate": 14.1,
-  "snr_db": 8.3, "bvp_window": [...] }
-```
-
----
 
 ## Thay đổi model
 
 ### Dùng model đã có trong `backend/weights/`
 
-Backend có sẵn **34 model ONNX** — xem danh sách đầy đủ trong [docs/convert.md](docs/convert.md).
+Backend có sẵn **34 model ONNX**
 
 Ví dụ dùng FactorizePhys:
 ```env
@@ -396,7 +267,7 @@ bash export_batch.sh
 | MA-UBFC | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
 
 ✅ = ONNX sẵn trong `backend/weights/`  
-⚠️ = Chỉ có `.pth` (PyTorch fallback, xem [docs/convert.md](docs/convert.md))
+⚠️ = Chỉ có `.pth` (PyTorch fallback)
 
 ---
 

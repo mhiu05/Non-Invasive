@@ -6,7 +6,7 @@ Tài liệu này mô tả kiến trúc hiện tại của dự án, bao gồm ba
 
 Dự án hiện có ba luồng chính:
 
-- `HTTP` upload video offline: người dùng upload video và backend xử lý để trả về kết quả HR / Blink / SNR / HRV.
+- `HTTP` upload video offline: người dùng upload video và backend xử lý để trả về kết quả HR / SNR / HRV.
 - `WebSocket` realtime: frontend gửi frame webcam đến backend, backend trả về vitals livestream.
 - `HTTP` chatbot: người dùng hỏi câu hỏi, backend dùng RAG (FAISS + Gemini) để trả lời.
 
@@ -33,7 +33,7 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 - `backend/app/core/config.py` chứa cấu hình chung:
   - `model_path`, `model_config_path`, `device`, `fps`
   - `max_upload_mb`
-  - tham số blink và bandpass
+  - tham số bandpass
   - `gemini_api_key`, `chatbot_model` (cho chatbot RAG)
 
 ### 2.3 API endpoints
@@ -52,7 +52,7 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 
 - `backend/app/services/history_store.py` quản lý SQLite `backend/history.db`.
 - Cấu trúc bảng `history` lưu metadata của mỗi phiên:
-  - `id`, `created_at`, `type`, `filename`, `session_id`, `duration_sec`, `heart_rate`, `blink_rate`, `snr_db`, `age`, `age_group`, `bandpass_low_hz`, `bandpass_high_hz`, `hrv_ms`, `sdnn_ms`, `rmssd_ms`, `pnn50`, `peak_count`, `result`.
+  - `id`, `created_at`, `type`, `filename`, `session_id`, `duration_sec`, `heart_rate`, `snr_db`, `age`, `age_group`, `bandpass_low_hz`, `bandpass_high_hz`, `hrv_ms`, `sdnn_ms`, `rmssd_ms`, `pnn50`, `peak_count`, `result`.
 - `GET /history` trả list record theo thứ tự mới nhất, với lọc `type`, `start_at`, `end_at`.
 
 ### 2.5 Video job persistence
@@ -74,8 +74,8 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 
 - Module `backend/app/chatbot/` chứa các file chính:
   - `loader.py` — load tài liệu từ `backend/app/documents/` (PDF, .md, .txt).
-  - `vectorstore.py` — build/load FAISS index tại `backend/vectorstore/faiss_index/`.
-  - `engine.py` — RAG chain sử dụng Google Gemini (lazy-loaded khi có request đầu tiên).
+  - `vectorstore.py` — build/load FAISS index (Dense) và BM25 index (Sparse) tại `backend/vectorstore/faiss_index/`.
+  - `engine.py` — Advanced RAG chain sử dụng Google Gemini, bao gồm Query Rewriting, Hybrid Search và Re-ranking (lazy-loaded khi có request đầu tiên).
   - `feedback_store.py` — thu thập và lưu trữ phản hồi người dùng về câu trả lời chatbot.
   - `ingest.py` — nạp tài liệu mới vào vectorstore.
   - `auto_update.py` — tự động cập nhật vectorstore khi tài liệu thay đổi.
@@ -97,11 +97,7 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 - Phân biệt model `frame-wise` và `chunk-wise`.
 - `SessionState` giữ buffer input và BVP tạm cho từng phiên.
 
-### 3.3 Blink detection
-
-- `backend/app/services/blink_detector.py` tính blink rate từ vùng mắt trên frame webcam hoặc video.
-
-### 3.4 Xử lý tín hiệu
+### 3.3 Xử lý tín hiệu
 
 - `backend/app/services/signal_processor.py` xử lý BVP:
   - detrend,
@@ -117,14 +113,14 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 - `Home` page là landing page giới thiệu tính năng, giải thích các chỉ số sức khỏe và hướng dẫn sử dụng.
 - `Live` page là giao diện đo realtime qua webcam và WebSocket, hiển thị:
   - luồng webcam với bounding box khuôn mặt,
-  - kết quả vitals real-time (HR, Blink, SNR, HRV),
+  - kết quả vitals real-time (HR, SNR, HRV),
   - biểu đồ sóng BVP,
   - phần history nhúng trực tiếp.
 - `Upload` page là trung tâm UX offline, hiển thị:
   - video upload (async processing),
   - tuổi người dùng,
   - trạng thái xử lý (polling job),
-  - kết quả HR / Blink / SNR / HRV,
+  - kết quả HR / SNR / HRV,
   - export CSV BVP signal,
   - phần history nhúng trực tiếp.
 - `ChatBot` component — widget chat floating trên mọi trang, gọi `POST /chat`.
@@ -142,7 +138,7 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 - History persistence đã được triển khai đầy đủ cho cả đo video offline và phiên đo realtime qua webcam. WebSocket `stream.py` tự động lưu phiên realtime vào lịch sử khi kết thúc (nếu duration > 5 giây).
 - Frontend có `Home` page realtime dùng webcam/WebSocket và `Upload` page cho upload video offline + lịch sử.
 - Lịch sử được hiển thị ngay trong trang `Upload`, không còn route lịch sử riêng biệt.
-- Chatbot RAG đã tích hợp hoàn chỉnh (backend + frontend), sử dụng Google Gemini và FAISS. Ngoài ra có module `feedback_store.py` thu thập phản hồi, `ingest.py` nạp tài liệu, và `auto_update.py` tự động cập nhật vectorstore.
+- Chatbot RAG đã tích hợp hoàn chỉnh theo kiến trúc Advanced RAG (bao gồm Query Rewriting bằng LLM, Hybrid Search kết hợp FAISS + BM25, và Re-ranking bằng mô hình Cross-Encoder). Sử dụng Google Gemini làm LLM chính. Ngoài ra có module `feedback_store.py` thu thập phản hồi, `ingest.py` nạp tài liệu, và `auto_update.py` tự động cập nhật vectorstore.
 - Frontend `Upload` sử dụng `uploadVideoAsync()` để upload bất đồng bộ và `getJobStatus()` để polling trạng thái job cho đến khi hoàn thành.
 
 ## 6. Hạn chế kiến trúc
