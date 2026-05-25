@@ -16,15 +16,20 @@ from typing import Any, List
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_classic.retrievers.multi_query import MultiQueryRetriever
+from langchain_classic.retrievers import EnsembleRetriever
+from langchain_classic.retrievers import ContextualCompressionRetriever
+from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 
 from .loader import get_embeddings
-from .vectorstore import load_faiss
+from .vectorstore import load_faiss, load_bm25
 
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = (
     "Bạn là trợ lý AI cho ứng dụng đo sức khỏe không xâm lấn (rPPG). "
-    "Hỗ trợ người dùng hiểu kết quả đo (nhịp tim, HRV, blink rate, SNR) "
+    "Hỗ trợ người dùng hiểu kết quả đo (nhịp tim, HRV, SNR) "
     "và developer tra cứu kiến trúc hệ thống. "
     "Chỉ dùng thông tin từ tài liệu nội bộ được cung cấp. "
     "Không truy cập web trực tiếp. "
@@ -115,12 +120,40 @@ def get_rag_chain():
         logger.info("🤖 Initializing RAG chain (first request)...")
         embeddings = get_embeddings()
         vectorstore = load_faiss(embeddings)
-        retriever = vectorstore.as_retriever(
+        faiss_retriever = vectorstore.as_retriever(
             search_type="similarity",
             search_kwargs={"k": 10},
         )
 
+        bm25_retriever = load_bm25()
+        if bm25_retriever:
+            bm25_retriever.k = 10
+            retriever = EnsembleRetriever(
+                retrievers=[bm25_retriever, faiss_retriever],
+                weights=[0.3, 0.7]
+            )
+        else:
+            retriever = faiss_retriever
+
         _rag_llm = _build_gemini_llm()
+        
+        # Query Rewriting
+        retriever = MultiQueryRetriever.from_llm(
+            retriever=retriever,
+            llm=_rag_llm
+        )
+        
+        # Re-ranking
+        try:
+            model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
+            compressor = CrossEncoderReranker(model=model, top_n=5)
+            retriever = ContextualCompressionRetriever(
+                base_compressor=compressor,
+                base_retriever=retriever
+            )
+        except Exception as e:
+            logger.warning(f"Could not load re-ranker: {e}")
+
         prompt = ChatPromptTemplate.from_messages([
             ("system", SYSTEM_PROMPT),
             ("human", "{input}"),
