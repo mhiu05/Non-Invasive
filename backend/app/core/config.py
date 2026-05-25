@@ -26,9 +26,9 @@ class Settings(BaseSettings):
     # Chatbot
     gemini_api_key: str = ""
     # Primary Gemini model used for internal fallback when documents are missing
-    chatbot_model: str = "gemini-2.0-flash-lite"
+    chatbot_model: str = "gemini-flash-latest"
     # Fallback model to try if the primary model hits quota limits or is unavailable
-    chatbot_model_fallback: str = "gemini-2.0-flash-lite"
+    chatbot_model_fallback: str = "gemini-pro-latest"
     # NOTE: Google CSE removed — web fallback disabled
 
 

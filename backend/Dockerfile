@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 # Copy the rest of the application with proper permissions
 COPY --chown=user . /app
 
+# Ensure the /app directory itself is owned by user so SQLite can create new .db files
+RUN chown -R user /app
+
 # Switch to the non-root user
 USER user
 

@@ -42,7 +42,7 @@ class ChatFeedbackResponse(BaseModel):
 
 
 @router.post("", response_model=ChatResponse)
-async def chat_endpoint(body: ChatRequest):
+def chat_endpoint(body: ChatRequest):
     """Handle chat questions via RAG pipeline."""
     try:
         from app.chatbot.engine import ask
@@ -67,7 +67,7 @@ async def chat_endpoint(body: ChatRequest):
 
 
 @router.post("/feedback", response_model=ChatFeedbackResponse)
-async def chat_feedback(body: ChatFeedbackRequest):
+def chat_feedback(body: ChatFeedbackRequest):
     """Persist user feedback for future self-learning workflows."""
     try:
         from app.chatbot.feedback_store import save_feedback
