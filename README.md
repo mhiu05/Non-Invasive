@@ -6,9 +6,11 @@ Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt —
 webcam / video  →  face detection (MediaPipe)
                →  rPPG inference (ONNX hoặc PyTorch fallback)
                →  signal processing (FFT)
-               →  Heart Rate, SNR, HRV
+               →  Heart Rate, Blink Rate, SNR, HRV
                →  AI Chatbot (RAG + Gemini) hỗ trợ tư vấn
 ```
+
+![Architecture](figures/architecture.png)
 
 ![Demo](figures/demo.png)
 
@@ -20,7 +22,8 @@ webcam / video  →  face detection (MediaPipe)
 |-----------|-----------|
 | Python | 3.10+ |
 | Node.js | 18+ |
-| CUDA | 11.8+ (tùy chọn) |
+| CUDA (rPPG) | 11.8+ (tùy chọn) |
+| CPU | 
 | RAM | 8 GB+ |
 | Webcam | Bất kỳ (720p khuyến nghị) |
 
@@ -42,7 +45,7 @@ Non-Invasive/
 │   ├── app/
 │   │   ├── core/            # config, lifespan
 │   │   ├── services/        # rppg_engine, face_detector, preprocessor,
-│   │   │                    #   signal_processor, history_store
+│   │   │                    #   signal_processor, blink_detector, history_store
 │   │   ├── chatbot/         # RAG chatbot: engine, loader, vectorstore,
 │   │   │                    #   feedback_store, ingest, auto_update
 │   │   ├── documents/       # Tài liệu cho chatbot học (PDF, .md, .txt)
@@ -71,11 +74,8 @@ Non-Invasive/
 │   ├── chatbot_plan.md      # Kế hoạch mở rộng chatbot
 │   ├── deploy.md            # Hướng dẫn deploy
 │   ├── details.md           # Chi tiết từng file
-│   └── convert.md           # Ghi chú convert ONNX
 │
 ├── figures/                 # Ảnh demo và benchmark
-├── requirements.txt         # Python dependencies (toàn bộ dự án)
-└── README.md
 ```
 
 ## 🧠 Các công nghệ AI/ML & Web sử dụng
@@ -154,7 +154,7 @@ Mở trình duyệt: `http://localhost:3002`
 3. Nhìn thẳng vào webcam, đủ ánh sáng.
 4. Sau ~6 giây (181 frames @ 30fps), kết quả xuất hiện:
    - **Heart Rate** — nhịp tim (BPM)
-
+   - **Blink Rate** — tốc độ chớp mắt (lần/phút)
    - **Signal SNR** — chất lượng tín hiệu (dB), > 2 dB là tốt
    - **BVP chart** — dạng sóng mạch máu real-time
 5. Click **Stop** để dừng. Phiên đo (nếu > 5s) sẽ tự động lưu vào Lịch sử.
