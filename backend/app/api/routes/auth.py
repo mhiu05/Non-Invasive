@@ -52,9 +52,15 @@ def read_current_user(current_user: dict = Depends(get_current_user_required)):
     # wait, we don't have get_user_by_id. Let's just use what's in token, or add get_user_by_id
     from app.services.history_store import _get_conn, _row_to_dict
     conn = _get_conn()
-    row = conn.execute("SELECT * FROM users WHERE id = ?", (current_user["id"],)).fetchone()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM users WHERE id = %s", (current_user["id"],))
+        row = cur.fetchone()
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
     
-    return dict(row)
+    user_dict = dict(row)
+    # Ensure datetime is converted to ISO string if needed
+    if "created_at" in user_dict and hasattr(user_dict["created_at"], "isoformat"):
+        user_dict["created_at"] = user_dict["created_at"].isoformat()
+    return user_dict
