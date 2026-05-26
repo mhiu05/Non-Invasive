@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { LogIn, User, Lock, Mail } from 'lucide-react'
-import { register } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 import './Register.css'
 
 export function Register() {
@@ -19,10 +19,24 @@ export function Register() {
     setIsLoading(true)
     
     try {
-      await register(username, email, password)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+          }
+        }
+      })
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
       navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng đăng nhập.' } })
     } catch (err) {
-      setError(err.response?.data?.detail || 'Đã có lỗi xảy ra khi đăng ký')
+      setError('Đã có lỗi xảy ra khi đăng ký')
     } finally {
       setIsLoading(false)
     }

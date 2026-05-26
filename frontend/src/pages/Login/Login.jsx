@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { LogIn, Mail, Lock } from 'lucide-react'
-import { login, getMe } from '@/lib/api'
-import { useAuthStore } from '@/store/authStore'
+import { supabase } from '@/lib/supabase'
 import './Login.css'
 
 export function Login() {
@@ -14,7 +13,6 @@ export function Login() {
   
   const navigate = useNavigate()
   const location = useLocation()
-  const setAuth = useAuthStore((state) => state.setAuth)
 
   useEffect(() => {
     if (location.state?.message) {
@@ -29,17 +27,19 @@ export function Login() {
     setIsLoading(true)
     
     try {
-      const data = await login(email, password)
-      // Save to store temporarily to let axios pick it up for getMe
-      useAuthStore.getState().setAuth(null, data.access_token)
-      
-      // Fetch user profile
-      const user = await getMe()
-      setAuth(user, data.access_token)
-      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
       navigate('/profile')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Email hoặc mật khẩu không đúng')
+      setError('Đã có lỗi xảy ra')
     } finally {
       setIsLoading(false)
     }

@@ -129,34 +129,18 @@ def get_history_list(
     return [_row_to_dict(row) for row in rows]
 
 
-def get_history_by_id(history_id: str) -> dict | None:
+def get_history_by_id(history_id: str, user_id: str | None = None) -> dict | None:
     conn = _get_conn()
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM history WHERE id = %s", (history_id,))
+        if user_id:
+            cur.execute("SELECT * FROM history WHERE id = %s AND user_id = %s", (history_id, user_id))
+        else:
+            cur.execute("SELECT * FROM history WHERE id = %s", (history_id,))
         row = cur.fetchone()
     conn.close()
     return _row_to_dict(row) if row is not None else None
 
 
-def get_user_by_email(email: str) -> dict | None:
-    conn = _get_conn()
-    with conn.cursor() as cur:
-        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-        row = cur.fetchone()
-    conn.close()
-    return dict(row) if row is not None else None
-
-
-def create_user(user: dict) -> dict:
-    conn = _get_conn()
-    with conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO users (id, username, email, hashed_password, created_at) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
-            (user["id"], user["username"], user["email"], user["hashed_password"], user["created_at"])
-        )
-    conn.commit()
-    conn.close()
-    return user
 
 
 # Initialize database when module is imported.

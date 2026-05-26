@@ -27,8 +27,8 @@ def get_history(
 
 
 @router.get("/history/{history_id}", response_model=HistoryDetailResponse)
-def get_history_detail(history_id: str):
-    record = get_history_by_id(history_id)
+def get_history_detail(history_id: str, current_user: dict = Depends(get_current_user_required)):
+    record = get_history_by_id(history_id, user_id=current_user["id"])
     if record is None:
         raise HTTPException(404, "History record not found")
     return record

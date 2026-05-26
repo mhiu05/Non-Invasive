@@ -1,6 +1,6 @@
 import { Activity, Home, Upload, Video, LogIn, UserPlus, User as UserIcon, LogOut } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import { useAuth } from '@/features/auth/AuthProvider'
 import './Header.css'
 
 // Component Header hiển thị thanh điều hướng phía trên của ứng dụng
@@ -9,11 +9,11 @@ export function Header() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const logout = useAuthStore((state) => state.logout)
+  const { session, signOut } = useAuth()
+  const isAuthenticated = !!session
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await signOut()
     navigate('/login')
   }
 

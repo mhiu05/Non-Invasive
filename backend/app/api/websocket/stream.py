@@ -17,7 +17,7 @@ import logging
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 
 from app.core.config import settings
 
@@ -36,16 +36,17 @@ router = APIRouter()
 
 
 @router.websocket("/ws/stream")
-async def websocket_stream(ws: WebSocket, token: str | None = None):
+async def websocket_stream(ws: WebSocket, token: str = Query(...)):
+    from app.core.security import get_current_user_required
+    try:
+        user = get_current_user_required(token)
+        user_id = user["id"]
+    except Exception:
+        await ws.close(code=1008)
+        return
+
     await ws.accept()
     logger.info("WebSocket connected: %s", ws.client)
-
-    user_id = None
-    if token:
-        from app.core.security import get_current_user
-        user = get_current_user(token)
-        if user:
-            user_id = user["id"]
 
     if state.engine is None or state.face_detector is None:
         await ws.send_text(json.dumps({"type": "error", "message": "Model not loaded"}))

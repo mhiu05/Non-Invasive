@@ -24,7 +24,7 @@ from app.services.signal_processor import (
     get_age_group,
     get_bandpass_by_age,
 )
-from app.core.security import get_current_user
+from app.core.security import get_current_user_required
 import app.core.lifespan as state
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ async def upload_video_async(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     age: int | None = Form(None),
-    current_user: dict | None = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_required),
 ):
     if state.engine is None or state.face_detector is None:
         raise HTTPException(503, "Model not loaded yet")
@@ -133,7 +133,7 @@ async def upload_video_async(
 
     job_id = str(uuid.uuid4())
     _create_job_record(job_id, tmp_path)
-    user_id = current_user["id"] if current_user else None
+    user_id = current_user["id"]
     background_tasks.add_task(process_video_job, job_id, tmp_path, file.filename or "unknown", age, user_id)
 
     return JSONResponse(
@@ -240,7 +240,7 @@ def get_video_job(job_id: str):
 async def upload_video(
     file: UploadFile = File(...),
     age: int | None = Form(None),
-    current_user: dict | None = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_required),
 ):
     if state.engine is None or state.face_detector is None:
         raise HTTPException(503, "Model not loaded yet")
@@ -292,7 +292,7 @@ async def upload_video(
             high_hz=high_hz,
             hrv=hrv,
             peak_count=hrv["peak_count"],
-            user_id=current_user["id"] if current_user else None,
+            user_id=current_user["id"],
             extra_result={
                 "total_frames": total_frames,
                 "bvp_length": len(bvp_values),

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useAuthStore } from '../store/authStore'
+import { supabase } from './supabase'
 
 // Cấu hình HTTP client với axios
 export const http = axios.create({
@@ -7,39 +7,23 @@ export const http = axios.create({
   timeout: 120_000, // Timeout 2 phút cho các request xử lý lâu
 })
 
-http.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+http.interceptors.request.use(async (config) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.access_token) {
+    config.headers.Authorization = `Bearer ${session.access_token}`
   }
   return config
 })
 
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
+      await supabase.auth.signOut()
     }
     return Promise.reject(error)
   }
 )
-
-export async function login(email, password) {
-  const { data } = await http.post('/auth/login', { email, password })
-  return data
-}
-
-export async function register(username, email, password) {
-  const { data } = await http.post('/auth/register', { username, email, password })
-  return data
-}
-
-export async function getMe() {
-  const { data } = await http.get('/auth/me')
-  return data
-}
-
 
 // Upload video và xử lý đồng bộ (đợi kết quả ngay)
 export async function uploadVideo(file, age, onProgress) {

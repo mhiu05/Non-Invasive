@@ -7,6 +7,7 @@ import { HistoryView } from '@/components/HistoryView/HistoryView'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useWebcam } from '@/hooks/useWebcam'
 import { useVitalsStore } from '@/store/vitalsStore'
+import { useAuth } from '@/features/auth/AuthProvider'
 import './Live.css'
 
 // Component Live xử lý việc đo lường các chỉ số sinh tồn trực tiếp từ Webcam
@@ -14,6 +15,8 @@ export function Live() {
   // Lấy các state toàn cục (thông số, buffer, face bounding box...) từ zustand store
   const { heartRate, snrDb, hrvMs, bvpWindow, bufferFrames, bufferNeeded, faceBbox, faceDetected, isConnected, reset } =
     useVitalsStore()
+    
+  const { session } = useAuth()
   
   // State quản lý độ tuổi nhập vào và các state hiển thị (đã được làm mượt)
   const [age, setAge] = useState(undefined)
@@ -28,7 +31,7 @@ export function Live() {
   const ageRef = useCallback(() => (age != null && !Number.isNaN(age) ? age : null), [age])
 
   // Custom hook kết nối WebSocket và gửi frames
-  const { connect, disconnect, sendFrame } = useWebSocket(ageRef)
+  const { connect, disconnect, sendFrame } = useWebSocket(ageRef, session?.access_token)
   // Custom hook quản lý Webcam và gửi frame định kỳ vào hàm sendFrame
   const { videoRef, active, error, start, stop } = useWebcam(sendFrame)
 

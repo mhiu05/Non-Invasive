@@ -8,15 +8,17 @@ import { Register } from '@/pages/Register/Register'
 import { Profile } from '@/pages/Profile/Profile'
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute'
 import { ChatBot } from '@/components/ChatBot/ChatBot'
+import { AuthProvider } from '@/features/auth/AuthProvider'
 import './App.css'
 
 // Component gốc của ứng dụng, thiết lập cấu trúc Layout (Header, ChatBot) và định tuyến (Routes)
 export default function App() {
   return (
     <BrowserRouter>
-      {/* Container chính bao bọc toàn bộ giao diện */}
-      <div className="app-container">
-        <Header />
+      <AuthProvider>
+        {/* Container chính bao bọc toàn bộ giao diện */}
+        <div className="app-container">
+          <Header />
         
         {/* Khai báo các route (trang) trong hệ thống */}
         <Routes>
@@ -31,6 +33,7 @@ export default function App() {
         {/* Widget ChatBot luôn hiển thị ở góc màn hình trên mọi trang */}
         <ChatBot />
       </div>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

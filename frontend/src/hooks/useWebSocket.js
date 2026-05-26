@@ -5,7 +5,7 @@ const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8001/ws/stream'
 const RECONNECT_MS = 3000
 
 // Hook quản lý kết nối WebSocket hai chiều với backend để stream dữ liệu
-export function useWebSocket(getAge) {
+export function useWebSocket(getAge, token) {
   const ws = useRef(null)
   const reconnectTimer = useRef(null)
   const shouldReconnect = useRef(false)
@@ -14,7 +14,8 @@ export function useWebSocket(getAge) {
   // Khởi tạo kết nối WebSocket
   const connect = useCallback(() => {
     shouldReconnect.current = true
-    ws.current = new WebSocket(WS_URL)
+    const url = token ? `${WS_URL}?token=${token}` : WS_URL
+    ws.current = new WebSocket(url)
 
     ws.current.onopen = () => {
       setConnected(true)
@@ -50,7 +51,7 @@ export function useWebSocket(getAge) {
     }
 
     ws.current.onerror = () => ws.current?.close()
-  }, [setVitals, setFace, setConnected])
+  }, [setVitals, setFace, setConnected, token])
 
   // Ngắt kết nối thủ công
   const disconnect = useCallback(() => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { fetchHistory } from '@/lib/api'
-import { useAuthStore } from '@/store/authStore'
+import { useAuth } from '@/features/auth/AuthProvider'
 import { Activity, Heart, Activity as Signal, User, Clock, Calendar } from 'lucide-react'
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend
@@ -8,7 +8,7 @@ import {
 import './Profile.css'
 
 export function Profile() {
-  const user = useAuthStore((state) => state.user)
+  const { user } = useAuth()
   const [history, setHistory] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -82,7 +82,7 @@ export function Profile() {
             <User size={40} />
           </div>
           <div>
-            <h2>Chào, {user?.username || 'Người dùng'}</h2>
+            <h2>Chào, {user?.user_metadata?.username || user?.email?.split('@')[0] || 'Người dùng'}</h2>
             <p>{user?.email}</p>
           </div>
         </div>
