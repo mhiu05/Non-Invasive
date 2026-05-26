@@ -76,7 +76,7 @@ Logic xử lý chính:
 
 - **preprocessor.py** - Tiền xử lý video (resize, normalize)
 - **signal_processor.py** - Xử lý tín hiệu (bandpass, FFT, HRV, SNR)
-- **history_store.py** - Quản lý SQLite history.db (CRUD lịch sử đo)
+- **history_store.py** - Quản lý kết nối PostgreSQL (Supabase) cho các thao tác CRUD lịch sử đo và người dùng
 
 ### Chatbot (`app/chatbot/`)
 Module Advanced RAG chatbot:

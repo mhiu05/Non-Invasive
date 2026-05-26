@@ -50,14 +50,14 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 
 ### 2.4 Lưu trữ lịch sử
 
-- `backend/app/services/history_store.py` quản lý SQLite `backend/history.db`.
+- `backend/app/services/history_store.py` quản lý kết nối cơ sở dữ liệu **PostgreSQL (Supabase)**.
 - Cấu trúc bảng `history` lưu metadata của mỗi phiên:
   - `id`, `created_at`, `type`, `filename`, `session_id`, `duration_sec`, `heart_rate`, `snr_db`, `age`, `age_group`, `bandpass_low_hz`, `bandpass_high_hz`, `hrv_ms`, `sdnn_ms`, `rmssd_ms`, `pnn50`, `peak_count`, `result`.
 - `GET /history` trả list record theo thứ tự mới nhất, với lọc `type`, `start_at`, `end_at`.
 
 ### 2.5 Video job persistence
 
-- `backend/app/api/routes/video.py` tạo SQLite `backend/video_jobs.db` để lưu job async.
+- `backend/app/api/routes/video.py` lưu trữ trạng thái job async vào bảng `jobs` trên cơ sở dữ liệu **PostgreSQL (Supabase)**.
 - Bảng `jobs` chứa `id`, `status`, `created_at`, `updated_at`, `result`, `error`, `file_path`.
 - `POST /video/upload-async` tạo job, lưu file tạm và gửi task xử lý bằng `BackgroundTasks`.
 - `GET /video/jobs/{job_id}` trả trạng thái và kết quả.

@@ -31,13 +31,18 @@ Hệ thống được thiết kế với 4 phân lớp chính:
 
 ### Khởi động hệ thống
 
-1. **Khởi tạo dữ liệu vector cho Chatbot (chỉ cần chạy lần đầu)**
+1. **Cấu hình biến môi trường**
+   - Copy file `.env.example` thành `.env` bên trong thư mục `backend/`.
+   - Cập nhật chuỗi kết nối PostgreSQL (Supabase) vào `SUPABASE_DB_URL` và điền `GEMINI_API_KEY`.
+
+2. **Cài đặt thư viện và Khởi tạo dữ liệu vector cho Chatbot (chạy lần đầu)**
    ```bash
    cd backend
+   pip install -r requirements.txt
    python scripts/build_embeddings.py
    ```
 
-2. **Chạy API Backend**
+3. **Chạy API Backend**
    ```bash
    cd backend
    python -m uvicorn app.main:app --reload --port 8001
