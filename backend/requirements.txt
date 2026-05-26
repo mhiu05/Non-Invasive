@@ -10,6 +10,7 @@ passlib
 bcrypt==3.2.2
 python-jose
 cryptography
+psycopg2-binary
 
 opencv-python
 opencv-contrib-python

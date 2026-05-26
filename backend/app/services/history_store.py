@@ -1,70 +1,26 @@
 import json
 import logging
 import os
-import sqlite3
 import uuid
 from datetime import datetime
+import psycopg2
+import psycopg2.extras
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "history.db")
-
+DB_URL = os.getenv("SUPABASE_DB_URL")
 
 def _get_conn():
-    conn = sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DB_URL, cursor_factory=psycopg2.extras.DictCursor)
     return conn
 
-
 def init_history_db() -> None:
-    conn = _get_conn()
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users(
-            id TEXT PRIMARY KEY,
-            username TEXT,
-            email TEXT UNIQUE,
-            hashed_password TEXT,
-            created_at TEXT
-        )
-        """
-    )
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS history(
-            id TEXT PRIMARY KEY,
-            user_id TEXT,
-            created_at TEXT,
-            type TEXT,
-            filename TEXT,
-            session_id TEXT,
-            duration_sec REAL,
-            heart_rate REAL,
-            blink_rate REAL,
-            snr_db REAL,
-            age INTEGER,
-            age_group TEXT,
-            bandpass_low_hz REAL,
-            bandpass_high_hz REAL,
-            hrv_ms REAL,
-            sdnn_ms REAL,
-            rmssd_ms REAL,
-            pnn50 REAL,
-            peak_count INTEGER,
-            result TEXT
-        )
-        """
-    )
-    # Check if user_id column exists (for backward compatibility)
-    try:
-        conn.execute("ALTER TABLE history ADD COLUMN user_id TEXT")
-    except sqlite3.OperationalError:
-        pass # Column already exists
-    conn.commit()
-    conn.close()
+    # Bảng đã được tạo trên Supabase, không cần tạo lại ở đây
+    pass
 
 
-def _row_to_dict(row: sqlite3.Row) -> dict:
+def _row_to_dict(row) -> dict:
     return {
         "id": row["id"],
         "user_id": row["user_id"] if "user_id" in row.keys() else None,
@@ -94,36 +50,41 @@ def save_history_record(record: dict) -> str:
     result_value = record.get("result")
     user_id = record.get("user_id")
     conn = _get_conn()
-    conn.execute(
-        """
-        INSERT OR REPLACE INTO history(
-            id, user_id, created_at, type, filename, session_id, duration_sec,
-            heart_rate, snr_db, age, age_group, bandpass_low_hz,
-            bandpass_high_hz, hrv_ms, sdnn_ms, rmssd_ms, pnn50, peak_count, result
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            history_id,
-            user_id,
-            created_at,
-            record.get("type"),
-            record.get("filename"),
-            record.get("session_id"),
-            record.get("duration_sec"),
-            record.get("heart_rate"),
-            record.get("snr_db"),
-            record.get("age"),
-            record.get("age_group"),
-            record.get("bandpass_low_hz"),
-            record.get("bandpass_high_hz"),
-            record.get("hrv_ms"),
-            record.get("sdnn_ms"),
-            record.get("rmssd_ms"),
-            record.get("pnn50"),
-            record.get("peak_count"),
-            json.dumps(result_value) if result_value is not None else None,
-        ),
-    )
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO history(
+                id, user_id, created_at, type, filename, session_id, duration_sec,
+                heart_rate, snr_db, age, age_group, bandpass_low_hz,
+                bandpass_high_hz, hrv_ms, sdnn_ms, rmssd_ms, pnn50, peak_count, result
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET
+                user_id = EXCLUDED.user_id,
+                result = EXCLUDED.result,
+                duration_sec = EXCLUDED.duration_sec
+            """,
+            (
+                history_id,
+                user_id,
+                created_at,
+                record.get("type"),
+                record.get("filename"),
+                record.get("session_id"),
+                record.get("duration_sec"),
+                record.get("heart_rate"),
+                record.get("snr_db"),
+                record.get("age"),
+                record.get("age_group"),
+                record.get("bandpass_low_hz"),
+                record.get("bandpass_high_hz"),
+                record.get("hrv_ms"),
+                record.get("sdnn_ms"),
+                record.get("rmssd_ms"),
+                record.get("pnn50"),
+                record.get("peak_count"),
+                json.dumps(result_value) if result_value is not None else None,
+            ),
+        )
     conn.commit()
     conn.close()
     return history_id
@@ -142,50 +103,57 @@ def get_history_list(
     params: list[object] = []
 
     if user_id is not None:
-        filters.append("user_id = ?")
+        filters.append("user_id = %s")
         params.append(user_id)
     if history_type is not None:
-        filters.append("type = ?")
+        filters.append("type = %s")
         params.append(history_type)
     if start_at is not None:
-        filters.append("created_at >= ?")
+        filters.append("created_at >= %s")
         params.append(start_at)
     if end_at is not None:
-        filters.append("created_at <= ?")
+        filters.append("created_at <= %s")
         params.append(end_at)
 
     if filters:
         query += " WHERE " + " AND ".join(filters)
 
-    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
     params.extend([limit, offset])
 
     conn = _get_conn()
-    rows = conn.execute(query, params).fetchall()
+    with conn.cursor() as cur:
+        cur.execute(query, tuple(params))
+        rows = cur.fetchall()
     conn.close()
     return [_row_to_dict(row) for row in rows]
 
 
 def get_history_by_id(history_id: str) -> dict | None:
     conn = _get_conn()
-    row = conn.execute("SELECT * FROM history WHERE id = ?", (history_id,)).fetchone()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM history WHERE id = %s", (history_id,))
+        row = cur.fetchone()
     conn.close()
     return _row_to_dict(row) if row is not None else None
 
 
 def get_user_by_email(email: str) -> dict | None:
     conn = _get_conn()
-    row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+        row = cur.fetchone()
     conn.close()
     return dict(row) if row is not None else None
 
 
 def create_user(user: dict) -> dict:
     conn = _get_conn()
-    conn.execute(
-        "INSERT INTO users (id, username, email, hashed_password, created_at) VALUES (?, ?, ?, ?, ?)",
-        (user["id"], user["username"], user["email"], user["hashed_password"], user["created_at"])
-    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO users (id, username, email, hashed_password, created_at) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
+            (user["id"], user["username"], user["email"], user["hashed_password"], user["created_at"])
+        )
     conn.commit()
     conn.close()
     return user

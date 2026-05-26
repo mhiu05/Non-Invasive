@@ -6,38 +6,21 @@ validated interactions for corpus improvements.
 """
 
 import os
-import sqlite3
 from datetime import datetime
 from typing import List, Optional
+import psycopg2
+import psycopg2.extras
 
-BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-FEEDBACK_DB_PATH = os.path.join(BACKEND_ROOT, "chatbot_feedback.db")
+DB_URL = os.getenv("SUPABASE_DB_URL")
 
 
 def _get_conn():
-    conn = sqlite3.connect(FEEDBACK_DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DB_URL, cursor_factory=psycopg2.extras.DictCursor)
     return conn
 
 
 def init_feedback_store() -> None:
-    conn = _get_conn()
-    with conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS chatbot_feedback (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT NOT NULL,
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                sources TEXT,
-                rating INTEGER,
-                comment TEXT,
-                session_id TEXT
-            )
-            """
-        )
-    conn.close()
+    pass
 
 
 def save_feedback(
@@ -50,12 +33,12 @@ def save_feedback(
 ) -> None:
     init_feedback_store()
     conn = _get_conn()
-    with conn:
-        conn.execute(
+    with conn.cursor() as cur:
+        cur.execute(
             """
             INSERT INTO chatbot_feedback (
                 created_at, question, answer, sources, rating, comment, session_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 datetime.utcnow().isoformat() + "Z",
@@ -67,16 +50,18 @@ def save_feedback(
                 session_id,
             ),
         )
+    conn.commit()
     conn.close()
 
 
-def list_feedback(limit: int = 100) -> List[sqlite3.Row]:
+def list_feedback(limit: int = 100) -> List[dict]:
     init_feedback_store()
     conn = _get_conn()
-    cursor = conn.execute(
-        "SELECT * FROM chatbot_feedback ORDER BY created_at DESC LIMIT ?",
-        (limit,),
-    )
-    rows = cursor.fetchall()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT * FROM chatbot_feedback ORDER BY created_at DESC LIMIT %s",
+            (limit,),
+        )
+        rows = cur.fetchall()
     conn.close()
-    return rows
+    return [dict(row) for row in rows]

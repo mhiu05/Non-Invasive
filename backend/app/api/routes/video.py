@@ -1,10 +1,11 @@
 import json
 import logging
-import sqlite3
-import tempfile
 import os
 import uuid
+import tempfile
 from datetime import datetime
+import psycopg2
+import psycopg2.extras
 
 import cv2
 import numpy as np
@@ -29,46 +30,31 @@ import app.core.lifespan as state
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "../../..", "video_jobs.db")
+DB_URL = os.getenv("SUPABASE_DB_URL")
 
 
 def _get_conn():
-    conn = sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DB_URL, cursor_factory=psycopg2.extras.DictCursor)
     return conn
 
 
 def init_jobs_db() -> None:
-    conn = _get_conn()
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS jobs(
-            id TEXT PRIMARY KEY,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            result TEXT,
-            error TEXT,
-            file_path TEXT
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
+    pass
 
 
-def _update_job_status(job_id: str, status_value: str, conn: sqlite3.Connection, result: str | None = None, error: str | None = None) -> None:
+def _update_job_status(job_id: str, status_value: str, conn, result: str | None = None, error: str | None = None) -> None:
     updated_at = datetime.utcnow().isoformat()
-    if result is not None or error is not None:
-        conn.execute(
-            "UPDATE jobs SET status = ?, result = ?, error = ?, updated_at = ? WHERE id = ?",
-            (status_value, result, error, updated_at, job_id),
-        )
-    else:
-        conn.execute(
-            "UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?",
-            (status_value, updated_at, job_id),
-        )
+    with conn.cursor() as cur:
+        if result is not None or error is not None:
+            cur.execute(
+                "UPDATE jobs SET status = %s, result = %s, error = %s, updated_at = %s WHERE id = %s",
+                (status_value, result, error, updated_at, job_id),
+            )
+        else:
+            cur.execute(
+                "UPDATE jobs SET status = %s, updated_at = %s WHERE id = %s",
+                (status_value, updated_at, job_id),
+            )
 
 
 init_jobs_db()
@@ -114,10 +100,11 @@ def _build_history_payload(
 def _create_job_record(job_id: str, file_path: str) -> None:
     now = datetime.utcnow().isoformat()
     conn = _get_conn()
-    conn.execute(
-        "INSERT INTO jobs (id, status, created_at, updated_at, file_path) VALUES (?, ?, ?, ?, ?)",
-        (job_id, "pending", now, now, file_path),
-    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO jobs (id, status, created_at, updated_at, file_path) VALUES (%s, %s, %s, %s, %s)",
+            (job_id, "pending", now, now, file_path),
+        )
     conn.commit()
     conn.close()
 
@@ -233,7 +220,9 @@ def process_video_job(job_id: str, path: str, filename: str, age: int | None, us
 @router.get("/video/jobs/{job_id}")
 def get_video_job(job_id: str):
     conn = _get_conn()
-    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM jobs WHERE id = %s", (job_id,))
+        row = cur.fetchone()
     conn.close()
     if row is None:
         raise HTTPException(404, "Job not found")
