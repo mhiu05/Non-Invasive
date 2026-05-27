@@ -55,11 +55,12 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
   - `id`, `created_at`, `type`, `filename`, `session_id`, `duration_sec`, `heart_rate`, `snr_db`, `age`, `age_group`, `bandpass_low_hz`, `bandpass_high_hz`, `hrv_ms`, `sdnn_ms`, `rmssd_ms`, `pnn50`, `peak_count`, `result`.
 - `GET /history` trả list record theo thứ tự mới nhất, với lọc `type`, `start_at`, `end_at`.
 
-### 2.5 Video job persistence
+### 2.5 Video job persistence & Job Queue
 
 - `backend/app/api/routes/video.py` lưu trữ trạng thái job async vào bảng `jobs` trên cơ sở dữ liệu **PostgreSQL (Supabase)**.
 - Bảng `jobs` chứa `id`, `status`, `created_at`, `updated_at`, `result`, `error`, `file_path`.
-- `POST /video/upload-async` tạo job, lưu file tạm và gửi task xử lý bằng `BackgroundTasks`.
+- `POST /video/upload-async` tạo job, upload trực tiếp video lên **S3 Object Storage** thông qua `backend/app/services/storage.py`, và đẩy Message Task vào hàng đợi.
+- **Celery Worker** (chạy song song và lắng nghe **Redis** broker) sẽ tự động nhận job, download file từ S3, khởi tạo model và tiến hành phân tích rPPG. Sau khi phân tích thành công, file trên S3 sẽ được xóa để giải phóng dung lượng.
 - `GET /video/jobs/{job_id}` trả trạng thái và kết quả.
 
 ### 2.6 WebSocket realtime
@@ -143,5 +144,4 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 
 ## 6. Hạn chế kiến trúc
 - Chatbot vectorstore cần rebuild thủ công khi tài liệu thay đổi.
-- Chưa có cơ chế người dùng đăng nhập, chưa phân biệt nhiều người dùng.
-- Backend sử dụng `BackgroundTasks` cho async jobs, job recovery khi restart còn hạn chế.
+- Chưa có cơ chế người dùng đăng nhập phức tạp, phân quyền bảo mật nhiều lớp.

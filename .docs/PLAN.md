@@ -226,7 +226,7 @@ spec:
 
 ---
 
-## 3. Job Queue với Celery + Redis (P0)
+## 3. Job Queue với Celery + Redis (✅ Đã hoàn thành)
 
 `BackgroundTasks` của FastAPI không có retry, không có visibility, không recover khi restart. Thay bằng **Celery + Redis Broker**.
 
@@ -311,7 +311,7 @@ Dashboard xem queue length, task history, worker health — thiết yếu cho pr
 
 ---
 
-## 4. Object Storage cho File Video (P0)
+## 4. Object Storage cho File Video (✅ Đã hoàn thành)
 
 Không lưu file video trên disk của container (ephemeral, không scale).
 

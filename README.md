@@ -20,6 +20,7 @@ Hệ thống được thiết kế với 4 phân lớp chính:
 - **Signal Processing**: Trích xuất đặc trưng sinh trắc học qua Fast Fourier Transform (FFT) và Butterworth Bandpass Filter.
 - **AI / NLP**: Sử dụng mô hình tạo sinh Gemini 2.5 Flash, hệ thống tìm kiếm Hybrid Search (FAISS + BM25) cho RAG.
 - **Web Fullstack**: Backend FastAPI (hỗ trợ WebSocket & Async processing) và Frontend React/Vite mượt mà, thân thiện.
+- **Job Queue & Storage**: Phân bổ tài nguyên bằng hệ thống hàng đợi phân tán Celery + Redis. Sử dụng S3-compatible Object Storage để lưu trữ và quản lý file video an toàn.
 
 ## 🚀 Hướng dẫn cài đặt và chạy
 
@@ -42,11 +43,13 @@ Hệ thống được thiết kế với 4 phân lớp chính:
    python scripts/build_embeddings.py
    ```
 
-3. **Chạy API Backend**
+3. **Khởi động Backend và Worker bằng Docker Compose**
+   Hệ thống sử dụng Redis và Celery để xử lý ngầm, cách nhanh nhất là chạy qua Docker:
    ```bash
-   cd backend
-   python -m uvicorn app.main:app --reload --port 8001
+   docker-compose build
+   docker-compose up -d
    ```
+   *(Backend API sẽ chạy ở port 8001)*
 
 3. **Chạy Giao diện Frontend (trên terminal mới)**
    ```bash

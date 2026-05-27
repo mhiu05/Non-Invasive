@@ -73,10 +73,14 @@ Cấu hình và thiết lập core:
 Logic xử lý chính:
 - **rppg_engine.py** - Engine chính xử lý rPPG (ONNX + PyTorch fallback)
 - **face_detector.py** - Detect khuôn mặt bằng MediaPipe Face Mesh
-
 - **preprocessor.py** - Tiền xử lý video (resize, normalize)
 - **signal_processor.py** - Xử lý tín hiệu (bandpass, FFT, HRV, SNR)
 - **history_store.py** - Quản lý kết nối PostgreSQL (Supabase) cho các thao tác CRUD lịch sử đo và người dùng
+- **storage.py** - Dịch vụ tương tác với S3/Supabase Storage lưu trữ video
+
+### Worker (`app/worker/`)
+- **celery_app.py** - Khởi tạo và cấu hình ứng dụng Celery kết nối với Redis
+- **tasks/video.py** - Chứa các Background Task chạy ngầm trên Worker để xử lý video rPPG nặng
 
 ### Chatbot (`app/chatbot/`)
 Module Advanced RAG chatbot:
@@ -126,10 +130,11 @@ Endpoints API:
 ### Upload Video Flow (Async):
 1. User tải video lên từ **Upload.jsx** (Frontend)
 2. Gửi file đến `POST /video/upload-async` qua **api.js**
-3. Backend tạo background task và trả về `job_id`
-4. Frontend polling `GET /video/jobs/{job_id}` mỗi 2 giây
-5. Background task: **face_detector.py** → **rppg_engine.py** → **signal_processor.py** → lưu vào **history.db**
-6. Frontend nhận kết quả 'done' và hiển thị (VitalSignCard, BVPChart)
+3. Backend upload trực tiếp file lên **S3 Storage**, tạo job lưu vào PostgreSQL và gửi Task message sang **Celery + Redis**
+4. Trả về `job_id` cho Frontend
+5. Frontend polling `GET /video/jobs/{job_id}` mỗi 2 giây
+6. Celery Worker chạy ngầm: Tải file từ S3 → **face_detector.py** → **rppg_engine.py** → **signal_processor.py** → lưu vào **history db** → Xóa file S3
+7. Frontend nhận kết quả 'done' và hiển thị (VitalSignCard, BVPChart)
 
 ### Real-time Webcam Flow:
 1. **useWebcam.js** capture frames từ webcam (trong trang **Live.jsx**)
