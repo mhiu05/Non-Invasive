@@ -30,7 +30,7 @@ import app.core.lifespan as state
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-DB_URL = os.getenv("SUPABASE_DB_URL")
+DB_URL = os.getenv("SUPABASE_DB_URL", "").strip('"').strip("'")
 
 
 def _get_conn():

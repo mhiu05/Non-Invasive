@@ -9,7 +9,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-DB_URL = os.getenv("SUPABASE_DB_URL")
+DB_URL = os.getenv("SUPABASE_DB_URL", "").strip('"').strip("'")
 
 def _get_conn():
     conn = psycopg2.connect(DB_URL, cursor_factory=psycopg2.extras.DictCursor)
