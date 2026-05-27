@@ -1,13 +1,10 @@
 from celery import Celery
-import os
-
-# Lấy Redis URL từ môi trường (do docker-compose truyền vào)
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+from app.core.config import settings
 
 celery_app = Celery(
     "rppg_worker",
-    broker=redis_url,
-    backend=redis_url,
+    broker=settings.redis_url,
+    backend=settings.redis_url,
     include=["app.worker.tasks.video"],
 )
 

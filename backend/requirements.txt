@@ -33,3 +33,7 @@ faiss-cpu
 rank-bm25
 email-validator
 supabase
+celery
+redis
+boto3
+flower

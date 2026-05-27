@@ -31,5 +31,12 @@ class Settings(BaseSettings):
     chatbot_model_fallback: str = "gemini-pro-latest"
     # NOTE: Google CSE removed — web fallback disabled
 
+    # Redis & Celery
+    redis_url: str = "redis://redis:6379/0"
 
+    # Object Storage (Supabase/S3)
+    storage_endpoint: str = ""
+    storage_key: str = ""
+    storage_secret: str = ""
+    storage_bucket: str = "videos"
 settings = Settings()

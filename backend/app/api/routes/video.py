@@ -111,7 +111,6 @@ def _create_job_record(job_id: str, file_path: str) -> None:
 
 @router.post("/video/upload-async")
 async def upload_video_async(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     age: int | None = Form(None),
     current_user: dict = Depends(get_current_user_required),
@@ -126,95 +125,26 @@ async def upload_video_async(
     if len(content) > MAX_BYTES:
         raise HTTPException(413, f"File too large (max {settings.max_upload_mb} MB)")
 
-    suffix = os.path.splitext(file.filename or "video.mp4")[1] or ".mp4"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
+    from app.services.storage import upload_video
+    from app.worker.celery_app import celery_app
 
     job_id = str(uuid.uuid4())
-    _create_job_record(job_id, tmp_path)
+    suffix = os.path.splitext(file.filename or "video.mp4")[1] or ".mp4"
+    file_key = upload_video(content, job_id, suffix)
+
+    _create_job_record(job_id, file_key)
     user_id = current_user["id"]
-    background_tasks.add_task(process_video_job, job_id, tmp_path, file.filename or "unknown", age, user_id)
+    
+    celery_app.send_task(
+        "video.process",
+        args=[job_id, file_key, file.filename or "unknown", age, user_id]
+    )
 
     return JSONResponse(
         status_code=status.HTTP_202_ACCEPTED,
         content={"job_id": job_id, "status": "pending"},
     )
 
-
-def process_video_job(job_id: str, path: str, filename: str, age: int | None, user_id: str | None = None) -> None:
-    conn = _get_conn()
-    try:
-        _update_job_status(job_id, "running", conn)
-        conn.commit()
-
-        bvp_values, total_frames = _process_video(path)
-        if len(bvp_values) < 30:
-            raise RuntimeError("Video quá ngắn hoặc không phát hiện được mặt")
-
-        duration_sec = total_frames / max(settings.fps, 1)
-        age_group = get_age_group(age)
-        low_hz, high_hz = get_bandpass_by_age(age)
-        bvp_array = np.array(bvp_values)
-        signal = process_bvp(bvp_array, fs=settings.fps, low_hz=low_hz, high_hz=high_hz)
-        heart_rate, snr_db = compute_heart_rate(
-            bvp_array,
-            fs=settings.fps,
-            low_hz=low_hz,
-            high_hz=high_hz,
-        )
-        hrv = compute_hrv(signal, settings.fps)
-
-        result = {
-            "filename": filename,
-            "total_frames": total_frames,
-            "duration_sec": round(duration_sec, 2),
-            "heart_rate": round(heart_rate, 2),
-            "snr_db": round(snr_db, 2),
-            "bvp_signal": [round(float(v), 4) for v in bvp_values],
-            "age": age,
-            "age_group": age_group,
-            "bandpass_low_hz": low_hz,
-            "bandpass_high_hz": high_hz,
-            "hrv_ms": round(hrv["hrv_ms"], 2),
-            "sdnn_ms": round(hrv["sdnn_ms"], 2),
-            "rmssd_ms": round(hrv["rmssd_ms"], 2),
-            "pnn50": round(hrv["pnn50"], 2),
-            "peak_count": int(hrv["peak_count"]),
-        }
-
-        save_history_record(
-            _build_history_payload(
-                filename=filename,
-                duration_sec=duration_sec,
-                heart_rate=heart_rate,
-                snr_db=snr_db,
-                age=age,
-                age_group=age_group,
-                low_hz=low_hz,
-                high_hz=high_hz,
-                hrv=hrv,
-                peak_count=int(hrv["peak_count"]),
-                user_id=user_id,
-                extra_result={
-                    "total_frames": total_frames,
-                    "bvp_length": len(bvp_values),
-                },
-            )
-        )
-
-        _update_job_status(job_id, "done", conn, result=json.dumps(result), error=None)
-        conn.commit()
-    except Exception as exc:
-        logger.exception("Video async job failed: %s", exc)
-        _update_job_status(job_id, "failed", conn, result=None, error=str(exc))
-        conn.commit()
-    finally:
-        conn.close()
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
 
 
 @router.get("/video/jobs/{job_id}")
