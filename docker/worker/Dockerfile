@@ -5,7 +5,7 @@ WORKDIR /app
 COPY backend/requirements.txt .
 
 RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev && \
-    pip install --no-cache-dir --prefix=/install -r requirements.txt && \
+    pip install --no-cache-dir --prefix=/install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt && \
     pip install --no-cache-dir --prefix=/install celery redis && \
     apt-get purge -y gcc python3-dev && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
