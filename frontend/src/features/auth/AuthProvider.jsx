@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         
         // redirect to login if session expires or logs out and not on a public page
-        const publicRoutes = ['/login', '/register'];
+        const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
         if (!session && !publicRoutes.includes(location.pathname)) {
             navigate('/login');
         }
