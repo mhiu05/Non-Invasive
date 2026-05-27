@@ -1,30 +1,27 @@
 import os
-from jose import JWTError, jwt
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from supabase import create_client, Client
 
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
-ALGORITHM = "HS256"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
-    if not token or not SUPABASE_JWT_SECRET:
+    if not token or not SUPABASE_URL or not SUPABASE_ANON_KEY:
         return None
+        
     try:
-        payload = jwt.decode(
-            token, 
-            SUPABASE_JWT_SECRET, 
-            algorithms=[ALGORITHM],
-            audience="authenticated"
-        )
-        user_id: str = payload.get("sub")
-        email: str = payload.get("email")
-        if user_id is None:
-            return None
-        return {"id": user_id, "email": email}
-    except JWTError as e:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        response = supabase.auth.get_user(token)
+        
+        if response and response.user:
+            return {"id": response.user.id, "email": response.user.email}
+        return None
+    except Exception as e:
+        print(f"Auth Error: {e}")
         return None
 
 def get_current_user_required(token: str = Depends(oauth2_scheme)):
