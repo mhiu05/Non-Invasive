@@ -16,11 +16,11 @@ Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt —
 ![Architecture](.figures/architecture.png)
 
 Hệ thống được thiết kế với 4 phân lớp chính:
-- **Computer Vision & rPPG**: Sử dụng MediaPipe cho Face Mesh, kết hợp ONNX Runtime/PyTorch chạy các mô hình học sâu rPPG tiên tiến (DeepPhys, PhysFormer, FactorizePhys...).
+- **Computer Vision & rPPG**: Sử dụng MediaPipe cho Face Mesh, kết hợp ONNX Runtime chạy mô hình học sâu rPPG tiên tiến (FactorizePhys).
 - **Signal Processing**: Trích xuất đặc trưng sinh trắc học qua Fast Fourier Transform (FFT) và Butterworth Bandpass Filter.
-- **AI / NLP**: Sử dụng mô hình tạo sinh Gemini 2.5 Flash, hệ thống tìm kiếm Hybrid Search (FAISS + BM25) cho RAG.
+- **AI / NLP**: Sử dụng mô hình tạo sinh Gemini 1.5 Flash, hệ thống tìm kiếm Hybrid Search (FAISS + BM25) cho RAG.
 - **Web Fullstack**: Backend FastAPI (hỗ trợ WebSocket & Async processing) và Frontend React/Vite mượt mà, thân thiện.
-- **Job Queue & Storage**: Phân bổ tài nguyên bằng hệ thống hàng đợi phân tán Celery + Redis. Sử dụng S3-compatible Object Storage để lưu trữ và quản lý file video an toàn.
+- **Database & Job Queue**: Lưu trữ và xác thực tập trung bằng **Supabase (PostgreSQL & Auth)**. Phân bổ tài nguyên xử lý video siêu nặng bằng hệ thống hàng đợi phân tán **Celery + Redis**. Sử dụng **S3-compatible Object Storage (Supabase)** để quản lý file video an toàn.
 
 ## 🚀 Hướng dẫn cài đặt và chạy
 

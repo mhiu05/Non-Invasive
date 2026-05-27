@@ -77,11 +77,9 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
   - `loader.py` — load tài liệu từ `backend/app/documents/` (PDF, .md, .txt).
   - `vectorstore.py` — build/load FAISS index (Dense) và BM25 index (Sparse) tại `backend/vectorstore/faiss_index/`.
   - `engine.py` — Advanced RAG chain sử dụng Google Gemini, bao gồm Query Rewriting, Hybrid Search và Re-ranking (lazy-loaded khi có request đầu tiên).
-  - `feedback_store.py` — thu thập và lưu trữ phản hồi người dùng về câu trả lời chatbot.
-  - `ingest.py` — nạp tài liệu mới vào vectorstore.
-  - `auto_update.py` — tự động cập nhật vectorstore khi tài liệu thay đổi.
+  - `feedback_store.py` — thu thập và lưu trữ phản hồi người dùng về câu trả lời chatbot (Supabase).
 - Tài liệu chatbot được lưu trong `backend/app/documents/` (hiện có `Medical_book.pdf`).
-- Script `backend/scripts/build_embeddings.py` chạy 1 lần để build vectorstore.
+- Script `backend/scripts/build_embeddings.py` chạy 1 lần để build vectorstore thủ công.
 - Endpoint `POST /chat` nhận câu hỏi và trả lời dựa trên tài liệu nội bộ.
 
 ## 3. Các dịch vụ xử lý chính
@@ -94,9 +92,9 @@ Chatbot widget hiển thị trên mọi trang (floating button góc phải).
 ### 3.2 rPPG engine
 
 - `backend/app/services/rppg_engine.py` khởi tạo `RPPGEngine` từ cấu hình model.
-- Hỗ trợ ONNX runtime và fallback PyTorch.
-- Phân biệt model `frame-wise` và `chunk-wise`.
-- `SessionState` giữ buffer input và BVP tạm cho từng phiên.
+- Chỉ hỗ trợ **ONNX runtime** với model `FactorizePhys` nhằm đảm bảo tính gọn nhẹ, tốc độ cao và loại bỏ sự cồng kềnh của PyTorch.
+- Sử dụng mô hình xử lý `chunk-wise`.
+- `SessionState` giữ buffer input (180 frames mặc định) và BVP tạm cho từng phiên xử lý liên tục.
 
 ### 3.3 Xử lý tín hiệu
 

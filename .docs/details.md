@@ -33,6 +33,7 @@ Chứa các trang chính:
 Custom React hooks:
 - **useWebSocket.js** - Hook kết nối WebSocket với backend để nhận dữ liệu real-time
 - **useWebcam.js** - Hook quản lý webcam, capture video frames
+- **useSmoothedValue.js** - Hook làm mượt dữ liệu (chống nhảy số quá nhanh cho các chỉ số đo được)
 
 ### Utils (`src/lib/`)
 Hàm utility và helper:
@@ -71,12 +72,12 @@ Cấu hình và thiết lập core:
 
 ### Services (`app/services/`)
 Logic xử lý chính:
-- **rppg_engine.py** - Engine chính xử lý rPPG (ONNX + PyTorch fallback)
+- **rppg_engine.py** - Engine chính xử lý rPPG (Sử dụng ONNX Runtime với mô hình FactorizePhys)
 - **face_detector.py** - Detect khuôn mặt bằng MediaPipe Face Mesh
-- **preprocessor.py** - Tiền xử lý video (resize, normalize)
+- **preprocessor.py** - Tiền xử lý video (cắt khung hình cho chunk-wise)
 - **signal_processor.py** - Xử lý tín hiệu (bandpass, FFT, HRV, SNR)
 - **history_store.py** - Quản lý kết nối PostgreSQL (Supabase) cho các thao tác CRUD lịch sử đo và người dùng
-- **storage.py** - Dịch vụ tương tác với S3/Supabase Storage lưu trữ video
+- **storage.py** - Dịch vụ tương tác với S3/Supabase Storage lưu trữ video cho quá trình phân tích ngầm
 
 ### Worker (`app/worker/`)
 - **celery_app.py** - Khởi tạo và cấu hình ứng dụng Celery kết nối với Redis
@@ -88,9 +89,7 @@ Module Advanced RAG chatbot:
 - **loader.py** - Load tài liệu PDF/Markdown/Text từ `app/documents/`
 - **vectorstore.py** - Build/load FAISS (Dense) và BM25 (Sparse) index
 - **engine.py** - Advanced RAG chain kết hợp Query Rewriting, Hybrid Search, và Re-ranking (Google Gemini, lazy-loaded)
-- **feedback_store.py** - Lưu trữ feedback người dùng (câu hỏi, câu trả lời, rating)
-- **ingest.py** - Ingest nội dung mới vào kho tài liệu `app/documents/`
-- **auto_update.py** - Helper rebuild vectorstore index cho automation
+- **feedback_store.py** - Lưu trữ feedback người dùng vào CSDL (Supabase)
 
 ### Documents (`app/documents/`)
 Tài liệu cho chatbot học:
