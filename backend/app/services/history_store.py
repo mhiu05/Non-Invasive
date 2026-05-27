@@ -21,10 +21,14 @@ def init_history_db() -> None:
 
 
 def _row_to_dict(row) -> dict:
+    created_at = row["created_at"]
+    if isinstance(created_at, datetime):
+        created_at = created_at.isoformat()
+        
     return {
         "id": row["id"],
         "user_id": row["user_id"] if "user_id" in row.keys() else None,
-        "created_at": row["created_at"],
+        "created_at": created_at,
         "type": row["type"],
         "filename": row["filename"],
         "session_id": row["session_id"],
