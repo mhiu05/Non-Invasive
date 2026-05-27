@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 const AuthContext = createContext({});
 
@@ -10,8 +9,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -27,17 +24,11 @@ export const AuthProvider = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // redirect to login if session expires or logs out and not on a public page
-        const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
-        if (!session && !publicRoutes.includes(location.pathname)) {
-            navigate('/login');
-        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, []);
 
   const value = {
     session,
