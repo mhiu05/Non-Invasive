@@ -117,7 +117,7 @@ Dùng `@supabase/supabase-js` client trực tiếp ở frontend. Mọi request A
 ### 2.1 Docker hóa toàn bộ hệ thống
 
 ```
-docker/
+.docker/
   backend/
     Dockerfile          # Multi-stage: builder + runtime
     .dockerignore
@@ -168,19 +168,19 @@ services:
     ports: ["6379:6379"]
 
   backend:
-    build: ./docker/backend
+    build: ./.docker/backend
     env_file: backend/.env
     ports: ["8001:8001"]
     depends_on: [redis]
 
   worker:
-    build: ./docker/worker
+    build: ./.docker/worker
     env_file: backend/.env
     command: celery -A app.worker worker -Q video,default -c 4
     depends_on: [redis, backend]
 
   frontend:
-    build: ./docker/frontend
+    build: ./.docker/frontend
     ports: ["3002:80"]
     depends_on: [backend]
 ```
@@ -190,7 +190,7 @@ services:
 Dùng Helm chart để deploy lên GKE / EKS / DigitalOcean Kubernetes.
 
 ```
-k8s/
+.k8s/
   charts/
     rppg-backend/
       Chart.yaml
@@ -650,7 +650,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/backend/Dockerfile
+          file: .docker/backend/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
           cache-from: type=gha
@@ -663,7 +663,7 @@ jobs:
     steps:
       - name: Deploy to Kubernetes
         run: |
-          helm upgrade --install rppg ./k8s/charts/rppg-backend \
+          helm upgrade --install rppg ./.k8s/charts/rppg-backend \
             --set image.tag=${{ github.sha }} \
             --wait --timeout 5m
 ```

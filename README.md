@@ -2,7 +2,7 @@
 
 Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt — trích xuất nhịp tim, tốc độ chớp mắt, tín hiệu BVP và tích hợp chatbot AI tư vấn sức khỏe.
 
-![Demo](figures/demo.png)
+![Demo](.figures/demo.png)
 
 ## 🌟 Tính năng chính
 
@@ -13,7 +13,7 @@ Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt —
 
 ## 🏗 Kiến trúc hệ thống
 
-![Architecture](figures/architecture.png)
+![Architecture](.figures/architecture.png)
 
 Hệ thống được thiết kế với 4 phân lớp chính:
 - **Computer Vision & rPPG**: Sử dụng MediaPipe cho Face Mesh, kết hợp ONNX Runtime/PyTorch chạy các mô hình học sâu rPPG tiên tiến (DeepPhys, PhysFormer, FactorizePhys...).
@@ -72,14 +72,14 @@ Sau khi hoàn tất, mở trình duyệt web tại địa chỉ: `http://localho
 
 ### 1. Bình thường (Ngồi yên)
 - **Model tối ưu:** `FactorizePhys` — MAE: **~0.04 bpm**
-![Benchmark Normal](figures/benchmark_normal.png)
+![Benchmark Normal](.figures/benchmark_normal.png)
 
 ### 2. Chuyển động đầu
 - **Model tối ưu:** `FactorizePhys` — MAE: **~0.83 bpm**
-![Benchmark Head Motion](figures/benchmark_headmotion.png)
+![Benchmark Head Motion](.figures/benchmark_headmotion.png)
 
 ### 3. Đang nói chuyện
 - **Model tối ưu:** `EfficientPhys` — MAE: **~1.67 bpm**
-![Benchmark Talk](figures/benchmark_talk.png)
+![Benchmark Talk](.figures/benchmark_talk.png)
 
 > *Kết luận: Hệ thống đạt độ chính xác cao (sai số < 2 bpm) ngay cả trong môi trường có nhiễu.*
