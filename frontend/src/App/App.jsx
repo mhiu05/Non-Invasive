@@ -4,6 +4,8 @@ import { Home } from '@/pages/Home/Home'
 import { Live } from '@/pages/Live/Live'
 import { Upload } from '@/pages/Upload/Upload'
 import { Login } from '@/pages/Login/Login'
+import { ForgotPassword } from '@/pages/Login/ForgotPassword'
+import { ResetPassword } from '@/pages/Login/ResetPassword'
 import { Register } from '@/pages/Register/Register'
 import { Profile } from '@/pages/Profile/Profile'
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute'
@@ -26,6 +28,8 @@ export default function App() {
           <Route path="/live"   element={<Live />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/login"  element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         </Routes>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogIn, User, Lock, Mail } from 'lucide-react'
+import { LogIn, User, Lock, Mail, Calendar, Hash, Type } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import './Register.css'
 
@@ -8,6 +8,9 @@ export function Register() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [gender, setGender] = useState('nam')
+  const [dob, setDob] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   
@@ -25,6 +28,9 @@ export function Register() {
         options: {
           data: {
             username,
+            full_name: fullName,
+            gender,
+            dob
           }
         }
       })
@@ -34,7 +40,7 @@ export function Register() {
         return
       }
 
-      navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng đăng nhập.' } })
+      navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng kiểm tra hộp thư Email để xác nhận tài khoản trước khi đăng nhập.' } })
     } catch (err) {
       setError('Đã có lỗi xảy ra khi đăng ký')
     } finally {
@@ -62,6 +68,38 @@ export function Register() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
+          </div>
+
+          <div className="input-group">
+            <Type size={20} className="input-icon" />
+            <input 
+              type="text" 
+              placeholder="Họ và Tên" 
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="input-row">
+            <div className="input-group half">
+              <Calendar size={20} className="input-icon" />
+              <input 
+                type="date" 
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="input-group half">
+              <Hash size={20} className="input-icon" />
+              <select value={gender} onChange={(e) => setGender(e.target.value)} required className="gender-select">
+                <option value="nam">Nam</option>
+                <option value="nu">Nữ</option>
+                <option value="khac">Khác</option>
+              </select>
+            </div>
           </div>
           
           <div className="input-group">

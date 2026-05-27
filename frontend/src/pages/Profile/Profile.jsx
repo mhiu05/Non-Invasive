@@ -82,8 +82,14 @@ export function Profile() {
             <User size={40} />
           </div>
           <div>
-            <h2>Chào, {user?.user_metadata?.username || user?.email?.split('@')[0] || 'Người dùng'}</h2>
+            <h2>{user?.user_metadata?.full_name || user?.user_metadata?.username || user?.email?.split('@')[0] || 'Người dùng'}</h2>
             <p>{user?.email}</p>
+            {(user?.user_metadata?.gender || user?.user_metadata?.dob) && (
+              <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1' }}>
+                {user?.user_metadata?.gender === 'nam' ? 'Nam' : user?.user_metadata?.gender === 'nu' ? 'Nữ' : 'Khác'}
+                {user?.user_metadata?.dob && ` • Sinh năm ${new Date(user?.user_metadata?.dob).getFullYear()}`}
+              </p>
+            )}
           </div>
         </div>
         <div className="summary-badges">
