@@ -1,7 +1,7 @@
 """
 feedback_store.py — Simple feedback store for future self-learning workflows.
 
-Stores user feedback in a local SQLite database so the chatbot can later use
+Stores user feedback in Supabase (PostgreSQL) so the chatbot can later use
 validated interactions for corpus improvements.
 """
 
@@ -28,7 +28,6 @@ def save_feedback(
     answer: str,
     sources: List[str],
     rating: Optional[int] = None,
-    comment: Optional[str] = None,
     session_id: Optional[str] = None,
 ) -> None:
     init_feedback_store()
@@ -37,8 +36,8 @@ def save_feedback(
         cur.execute(
             """
             INSERT INTO chatbot_feedback (
-                created_at, question, answer, sources, rating, comment, session_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                created_at, question, answer, sources, rating, session_id
+            ) VALUES (%s, %s, %s, %s, %s, %s)
             """,
             (
                 datetime.utcnow().isoformat() + "Z",
@@ -46,7 +45,6 @@ def save_feedback(
                 answer,
                 ",".join(sources) if sources else None,
                 rating,
-                comment,
                 session_id,
             ),
         )

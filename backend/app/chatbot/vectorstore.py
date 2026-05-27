@@ -1,8 +1,16 @@
 """
-vectorstore.py — Build, load, and update FAISS vector index.
+vectorstore.py — Manage FAISS vector index for the Chatbot.
 
-Uses FAISS local storage at backend/vectorstore/faiss_index/. Supports
-rebuilds and incremental updates for internal document sources.
+Responsibilities:
+- Build, load, and update the FAISS vector database and BM25 index.
+- Data is stored SEPARATELY from the application source code for best practices:
+
+  backend/
+    ├── app/
+    │   └── chatbot/
+    │       └── vectorstore.py    <-- (This module)
+    └── vectorstore/
+        └── faiss_index/          <-- (Vector data is saved here)
 """
 
 from langchain_community.vectorstores import FAISS

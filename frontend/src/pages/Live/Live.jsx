@@ -6,6 +6,7 @@ import { VitalSignCard } from '@/components/VitalSignCard/VitalSignCard'
 import { HistoryView } from '@/components/HistoryView/HistoryView'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useWebcam } from '@/hooks/useWebcam'
+import { useSmoothedValue } from '@/hooks/useSmoothedValue'
 import { useVitalsStore } from '@/store/vitalsStore'
 import { useAuth } from '@/features/auth/AuthProvider'
 import './Live.css'
@@ -18,14 +19,16 @@ export function Live() {
     
   const { session } = useAuth()
   
-  // State quản lý độ tuổi nhập vào và các state hiển thị (đã được làm mượt)
+  // State quản lý độ tuổi nhập vào
   const [age, setAge] = useState(undefined)
-  const [displayHeartRate, setDisplayHeartRate] = useState(null)
-  const [displaySnrDb, setDisplaySnrDb] = useState(null)
-  const [displayHrvMs, setDisplayHrvMs] = useState(null)
   
   // State ẩn/hiện bảng lịch sử
   const [showHistory, setShowHistory] = useState(false)
+  
+  // Hook làm mượt hiển thị các giá trị (giảm hiệu ứng nhảy số quá nhanh)
+  const displayHeartRate = useSmoothedValue(heartRate)
+  const displaySnrDb = useSmoothedValue(snrDb)
+  const displayHrvMs = useSmoothedValue(hrvMs)
   
   // Hàm callback giữ giá trị độ tuổi hợp lệ
   const ageRef = useCallback(() => (age != null && !Number.isNaN(age) ? age : null), [age])
@@ -48,72 +51,7 @@ export function Live() {
     disconnect()
   }, [stop, disconnect])
 
-  // Các thông số dùng để làm mượt hiển thị số liệu (giảm hiệu ứng nhảy số quá nhanh)
-  const smoothingIntervalMs = 140
-  const smoothingFactor = 0.07
-  const smoothingThreshold = 0.25
 
-  // Hook làm mượt hiển thị cho giá trị Heart Rate
-  useEffect(() => {
-    if (heartRate === null) {
-      setDisplayHeartRate(null)
-      return
-    }
-    let active = true
-    const step = () => {
-      setDisplayHeartRate((prev) => {
-        if (prev === null) return heartRate
-        const next = prev + (heartRate - prev) * smoothingFactor
-        if (Math.abs(next - heartRate) < smoothingThreshold) return heartRate
-        return next
-      })
-      if (active) window.setTimeout(step, smoothingIntervalMs)
-    }
-    step()
-    return () => { active = false }
-  }, [heartRate])
-
-
-
-  // Hook làm mượt hiển thị cho giá trị SNR
-  useEffect(() => {
-    if (snrDb === null) {
-      setDisplaySnrDb(null)
-      return
-    }
-    let active = true
-    const step = () => {
-      setDisplaySnrDb((prev) => {
-        if (prev === null) return snrDb
-        const next = prev + (snrDb - prev) * smoothingFactor
-        if (Math.abs(next - snrDb) < smoothingThreshold) return snrDb
-        return next
-      })
-      if (active) window.setTimeout(step, smoothingIntervalMs)
-    }
-    step()
-    return () => { active = false }
-  }, [snrDb])
-
-  // Hook làm mượt hiển thị cho giá trị HRV
-  useEffect(() => {
-    if (hrvMs === null) {
-      setDisplayHrvMs(null)
-      return
-    }
-    let active = true
-    const step = () => {
-      setDisplayHrvMs((prev) => {
-        if (prev === null) return hrvMs
-        const next = prev + (hrvMs - prev) * smoothingFactor
-        if (Math.abs(next - hrvMs) < smoothingThreshold) return hrvMs
-        return next
-      })
-      if (active) window.setTimeout(step, smoothingIntervalMs)
-    }
-    step()
-    return () => { active = false }
-  }, [hrvMs])
 
   // Dọn dẹp: tự động dừng camera và ngắt kết nối khi component unmount
   useEffect(() => () => { stop(); disconnect() }, [stop, disconnect])

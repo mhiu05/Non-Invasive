@@ -1,3 +1,9 @@
+"""
+system.py — FastAPI endpoints for system health and status.
+
+GET /health  →  () → { status, model_loaded, device }
+"""
+
 from fastapi import APIRouter
 from app.schemas.vitals import HealthResponse
 from app.core.config import settings

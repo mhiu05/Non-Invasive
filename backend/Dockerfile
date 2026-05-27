@@ -1,29 +1,27 @@
 FROM python:3.10-slim
 
-# Create user with UID 1000 as required by Hugging Face Spaces
+# Thiết lập user non-root (UID 1000) để tương thích với các nền tảng như Hugging Face Spaces
 RUN useradd -m -u 1000 user
 ENV PATH="/home/user/.local/bin:$PATH"
 
 WORKDIR /app
 
-# Cài đặt thư viện hệ thống cần thiết cho OpenCV/MediaPipe (Run as root)
+# Cài đặt thư viện hệ thống cần thiết cho OpenCV/MediaPipe (chạy bằng quyền root)
 RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install (chown to user so pip can write if needed, though running as root then switching is fine too)
+# Copy file cấu hình thư viện trước để tận dụng Docker Cache
 COPY --chown=user ./requirements.txt requirements.txt
 
-# Tải trước model Cross-Encoder (tránh cold-start)
+# Cài đặt thư viện và Tải trước các mô hình AI (tránh bị cold-start khi user chat lần đầu)
 RUN pip install --no-cache-dir -r requirements.txt && \
-    python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
+    python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2'); from langchain_community.embeddings import HuggingFaceEmbeddings; HuggingFaceEmbeddings(model_name='all-MiniLM-L6-v2')"
 
-# Copy the rest of the application with proper permissions
+# Copy toàn bộ mã nguồn dự án vào container
 COPY --chown=user . /app
 
-# Ensure the /app directory itself is owned by user so SQLite can create new .db files
-RUN chown -R user /app
-
-# Switch to the non-root user
+# Chuyển sang user non-root để tăng tính bảo mật
 USER user
 
-# Chạy FastAPI uvicorn trên port 7860 (Port bắt buộc của Hugging Face)
+# Mặc định chạy FastAPI trên port 7860 (Port tiêu chuẩn của Hugging Face)
+# Khi chạy Celery Worker, lệnh này sẽ bị ghi đè bởi cấu hình trong docker-compose.yml
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]

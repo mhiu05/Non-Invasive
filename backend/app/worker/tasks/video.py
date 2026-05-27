@@ -1,3 +1,15 @@
+"""
+video.py — Định nghĩa các tác vụ (Tasks) xử lý video chạy ngầm bằng Celery.
+
+Nhiệm vụ:
+- init_worker: Tự động khởi tạo mô hình AI (RPPGEngine, FaceDetector) MỘT LẦN duy nhất khi Worker khởi động, giúp tiết kiệm RAM và thời gian chạy.
+- _process_video_local: Dùng OpenCV đọc từng frame của video, bóc tách khuôn mặt và tính toán tín hiệu BVP.
+- process_video: Tác vụ (Task) chính thực hiện quy trình khép kín:
+    1. Đánh dấu Job đang xử lý ("processing").
+    2. Tải file video nặng từ kho lưu trữ đám mây (Storage) về máy cục bộ.
+    3. Phân tích video trích xuất nhịp tim (Heart Rate) và chỉ số biến thiên (HRV).
+    4. Lưu kết quả vào CSDL và xóa file video để giải phóng dung lượng.
+"""
 import json
 import logging
 import os

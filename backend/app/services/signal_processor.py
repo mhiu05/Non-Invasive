@@ -1,3 +1,12 @@
+"""
+signal_processor.py — Core signal processing for rPPG.
+
+Responsibilities:
+- Extract and filter the BVP (Blood Volume Pulse) signal using Detrending and Bandpass.
+- Calculate Heart Rate (HR) and Signal-to-Noise Ratio (SNR) via Fast Fourier Transform (FFT).
+- Calculate Heart Rate Variability (HRV) metrics via peak detection.
+"""
+
 import numpy as np
 from scipy import signal as sp
 from scipy.signal import find_peaks, periodogram
@@ -46,13 +55,13 @@ def get_age_group(age: int | None) -> str:
             if low_age == 0 and high_age == 0:
                 return 'Trẻ sơ sinh'
             if low_age == 0 and high_age == 1:
-                return '2–12 tháng'
+                return '2-12 tháng'
             if low_age == 1 and high_age == 2:
-                return '1–2 năm'
+                return '1-2 năm'
             if low_age == 3 and high_age == 5:
-                return '3–5 năm'
+                return '3-5 năm'
             if low_age == 6 and high_age == 7:
-                return '6–7 năm'
+                return '6-7 năm'
             return '>= 8 tuổi'
     return '>= 8 tuổi'
 
@@ -108,35 +117,6 @@ def compute_hrv(sig: np.ndarray, fs: float = 30.0) -> dict[str, float | int]:
     }
 
 
-def fft_peak_hz(sig: np.ndarray, fs: float, low: float, high: float) -> float:
-    N = 1
-    while N < len(sig):
-        N *= 2
-    freqs, pxx = periodogram(sig, fs=fs, nfft=N * 4, detrend=False)
-    mask = (freqs >= low) & (freqs <= high)
-    if not mask.any():
-        return 0.0
-    return float(freqs[mask][np.argmax(pxx[mask])])
-
-
-def compute_snr(
-    sig: np.ndarray, hr_hz: float, fs: float, low: float, high: float
-) -> float:
-    N = 1
-    while N < len(sig):
-        N *= 2
-    freqs, pxx = periodogram(sig, fs=fs, nfft=N * 4, detrend=False)
-    dev = 6.0 / 60.0
-    sig_mask = (
-        ((freqs >= hr_hz - dev) & (freqs <= hr_hz + dev))
-        | ((freqs >= 2 * hr_hz - dev) & (freqs <= 2 * hr_hz + dev))
-    )
-    noise_mask = (freqs >= low) & (freqs <= high) & ~sig_mask
-    s = pxx[sig_mask].sum()
-    n = pxx[noise_mask].sum()
-    return float(10.0 * np.log10(s / n)) if n > 0 else 0.0
-
-
 def compute_heart_rate(
     bvp_buffer: np.ndarray,
     fs: float = 30.0,
@@ -146,8 +126,33 @@ def compute_heart_rate(
     """
     Full pipeline: cumsum → detrend → bandpass → FFT.
     Returns (heart_rate_bpm, snr_db).
+    
+    Optimized to compute FFT (periodogram) only once for both HR and SNR.
     """
     sig = process_bvp(bvp_buffer, fs, low_hz, high_hz)
-    hr_hz = fft_peak_hz(sig, fs, low_hz, high_hz)
-    snr = compute_snr(sig, hr_hz, fs, low_hz, high_hz)
+    
+    # 1. Optimal next power of 2 for FFT length
+    N = 1 << (len(sig) - 1).bit_length() if len(sig) > 0 else 1
+    
+    # 2. Compute Periodogram (FFT) exactly ONCE
+    freqs, pxx = periodogram(sig, fs=fs, nfft=N * 4, detrend=False)
+    
+    # 3. Find Heart Rate (highest peak in the valid bandpass mask)
+    mask = (freqs >= low_hz) & (freqs <= high_hz)
+    if not mask.any():
+        return 0.0, 0.0
+    hr_hz = float(freqs[mask][np.argmax(pxx[mask])])
+    
+    # 4. Calculate SNR (Signal to Noise Ratio)
+    dev = 6.0 / 60.0  # 6 BPM deviation tolerance
+    sig_mask = (
+        ((freqs >= hr_hz - dev) & (freqs <= hr_hz + dev))
+        | ((freqs >= 2 * hr_hz - dev) & (freqs <= 2 * hr_hz + dev))
+    )
+    noise_mask = (freqs >= low_hz) & (freqs <= high_hz) & ~sig_mask
+    
+    s = pxx[sig_mask].sum()
+    n = pxx[noise_mask].sum()
+    snr = float(10.0 * np.log10(s / n)) if n > 0 else 0.0
+    
     return hr_hz * 60.0, snr

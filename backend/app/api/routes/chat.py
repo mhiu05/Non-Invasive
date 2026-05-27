@@ -8,37 +8,17 @@ POST /chat/feedback  →  { feedback } → { status }
 import logging
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional, List
+
+from app.schemas.chat import (
+    ChatRequest,
+    ChatResponse,
+    ChatFeedbackRequest,
+    ChatFeedbackResponse,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["Chatbot"])
-
-
-class ChatRequest(BaseModel):
-    question: str
-    session_id: Optional[str] = None
-
-
-class ChatResponse(BaseModel):
-    answer: str
-    sources: List[str]
-    from_internal_docs: bool = True
-
-
-class ChatFeedbackRequest(BaseModel):
-    question: str
-    answer: str
-    sources: List[str]
-    rating: Optional[int] = None
-    comment: Optional[str] = None
-    session_id: Optional[str] = None
-
-
-class ChatFeedbackResponse(BaseModel):
-    status: str = "ok"
-    saved: bool = True
 
 
 @router.post("", response_model=ChatResponse)
@@ -77,7 +57,6 @@ def chat_feedback(body: ChatFeedbackRequest):
             answer=body.answer,
             sources=body.sources,
             rating=body.rating,
-            comment=body.comment,
             session_id=body.session_id,
         )
         return ChatFeedbackResponse()

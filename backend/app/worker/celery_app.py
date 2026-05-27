@@ -1,3 +1,11 @@
+"""
+celery_app.py — Cấu hình ứng dụng Celery (Background Worker).
+
+Nhiệm vụ:
+- Khởi tạo hệ thống Celery để tiếp nhận các tác vụ nặng (xử lý video) chạy ngầm.
+- Kết nối tới Message Broker và Backend (thường là Redis) để quản lý hàng đợi công việc.
+- Định tuyến các tác vụ (ví dụ: 'video.*' sẽ vào hàng đợi riêng biệt để tránh kẹt mạng).
+"""
 from celery import Celery
 from app.core.config import settings
 

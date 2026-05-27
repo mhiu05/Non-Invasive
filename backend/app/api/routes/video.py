@@ -1,3 +1,11 @@
+"""
+video.py — FastAPI endpoints for video processing and rPPG analysis.
+
+POST /video/upload-async  →  { file, age } → { job_id, status }
+GET /video/jobs/{job_id}  →  { job_id } → { job_id, status, result, error, updated_at }
+POST /video/upload  →  { file, age } → { VideoResultResponse }
+"""
+
 import json
 import logging
 import os

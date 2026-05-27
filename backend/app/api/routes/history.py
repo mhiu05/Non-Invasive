@@ -1,3 +1,10 @@
+"""
+history.py — FastAPI endpoints for user history.
+
+GET /history  →  { limit, offset, type, ... } → [ HistorySummary ]
+GET /history/{history_id}  →  { history_id } → { HistoryDetailResponse }
+"""
+
 from fastapi import APIRouter, HTTPException, Query, Depends
 
 from app.schemas.history import HistoryDetailResponse, HistorySummary

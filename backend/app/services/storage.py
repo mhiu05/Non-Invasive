@@ -1,3 +1,13 @@
+"""
+storage.py — Object Storage (S3 / Supabase) Integration.
+
+Responsibilities:
+- Connect to S3-compatible object storage (e.g., Supabase Storage) using boto3.
+- Manage uploading, downloading, and deleting large files (like videos).
+- This is crucial for the asynchronous video processing flow (Celery workers 
+  download the video from here to process it without blocking the API).
+"""
+
 import boto3
 import logging
 from botocore.exceptions import ClientError

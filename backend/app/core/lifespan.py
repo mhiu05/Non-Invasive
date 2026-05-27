@@ -1,3 +1,12 @@
+"""
+lifespan.py — Application lifecycle management and global state.
+
+Responsibilities:
+- Manage the startup and shutdown events of the FastAPI application.
+- Initialize and hold global, read-only instances (like AI models) in memory
+  so they can be shared efficiently across all API requests.
+"""
+
 import logging
 from contextlib import asynccontextmanager
 
@@ -19,7 +28,7 @@ face_detector: FaceDetector | None = None
 async def lifespan(app: FastAPI):
     global engine, face_detector
 
-    logger.info("Loading ONNX model from: %s", settings.model_path)
+    logger.info("Loading rPPG model from: %s", settings.model_path)
     engine = RPPGEngine(settings.model_path, settings.model_config_path, settings.device)
 
     logger.info("Initializing MediaPipe face detector")

@@ -1,3 +1,11 @@
+"""
+config.py — Central configuration settings for the backend.
+
+Responsibilities:
+- Load environment variables from the .env file.
+- Define application-wide configuration like model paths, database URLs, and API keys.
+"""
+
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,25 +24,19 @@ class Settings(BaseSettings):
 
     # Signal processing
     fps: int = 30
-    buffer_size: int = 180  # số frames tích lũy trước khi tính HR
-    hr_low_hz: float = 0.75  # 45 BPM
-    hr_high_hz: float = 2.5  # 150 BPM
 
     # Upload
     max_upload_mb: int = 100
 
     # Chatbot
     gemini_api_key: str = ""
-    # Primary Gemini model used for internal fallback when documents are missing
     chatbot_model: str = "gemini-flash-latest"
-    # Fallback model to try if the primary model hits quota limits or is unavailable
     chatbot_model_fallback: str = "gemini-pro-latest"
-    # NOTE: Google CSE removed — web fallback disabled
 
     # Redis & Celery
     redis_url: str = "redis://redis:6379/0"
 
-    # Object Storage (Supabase/S3)
+    # Object Storage (Supabase)
     storage_endpoint: str = ""
     storage_key: str = ""
     storage_secret: str = ""

@@ -1,3 +1,12 @@
+"""
+face_detector.py — Fast and stable face bounding box extraction.
+
+Responsibilities:
+- Detect faces using MediaPipe Face Mesh.
+- Expand and smooth the bounding box over time using Exponential Moving Average (EMA)
+  to prevent jitters and stabilize the rPPG signal.
+"""
+
 import cv2
 import numpy as np
 import mediapipe as mp
@@ -44,13 +53,11 @@ class FaceDetector:
         face_landmarks = results.multi_face_landmarks[0]
         H, W = frame_bgr.shape[:2]
 
-        x_min, y_min, x_max, y_max = W, H, 0, 0
-        for lm in face_landmarks.landmark:
-            px, py = int(lm.x * W), int(lm.y * H)
-            if px < x_min: x_min = px
-            if py < y_min: y_min = py
-            if px > x_max: x_max = px
-            if py > y_max: y_max = py
+        xs = [lm.x for lm in face_landmarks.landmark]
+        ys = [lm.y for lm in face_landmarks.landmark]
+        
+        x_min, x_max = int(min(xs) * W), int(max(xs) * W)
+        y_min, y_max = int(min(ys) * H), int(max(ys) * H)
 
         fw = x_max - x_min
         fh = y_max - y_min
