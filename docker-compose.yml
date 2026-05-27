@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build: 
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    env_file: 
+      - backend/.env
+    ports:
+      - "8001:8001"
+    volumes:
+      # Mount code for hot-reload in local dev (Requires uvicorn --reload in CMD to take effect, but good for quick tests)
+      - ./backend/app:/app/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+
+  worker:
+    build: 
+      context: .
+      dockerfile: docker/worker/Dockerfile
+    env_file: 
+      - backend/.env
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      - redis
+      - backend
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+
+  frontend:
+    build: 
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  redis_data:

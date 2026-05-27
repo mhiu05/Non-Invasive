@@ -1,0 +1,35 @@
+version: '3.8'
+
+# Override file for production
+# Chạy lệnh: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  backend:
+    # Trên production không mount mã nguồn trực tiếp để đảm bảo tính bất biến (immutable)
+    volumes: []
+    # Cấu hình giới hạn tài nguyên (Ví dụ)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+
+  worker:
+    volumes: []
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  frontend:
+    # Trên production thường deploy frontend lên Vercel/Netlify hoặc CDN thay vì chạy trong docker-compose.
+    # Nhưng nếu vẫn dùng docker-compose thì giữ nguyên cấu hình nginx.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
