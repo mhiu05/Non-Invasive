@@ -1,16 +1,16 @@
-# Chính sách Bảo mật (Security Policy)
+# Security Policy
 
-Hệ thống được thiết kế với mức độ bảo mật tiêu chuẩn, tuân thủ các quy tắc bảo vệ quyền riêng tư của dữ liệu y tế (Health Data).
+The system is designed with standard security measures, strictly adhering to privacy protection rules for Health Data.
 
-## Xác thực & Ủy quyền (Authentication & Authorization)
-- Toàn bộ cơ chế đăng nhập và cấp quyền được ủy thác cho **Supabase Auth**.
-- API sử dụng chuẩn **JWT (JSON Web Token)** để bảo mật. Các file frontend đều tự động đính kèm `Bearer Token` khi thực hiện Request.
-- **Row Level Security (RLS)** được kích hoạt trên Supabase PostgreSQL để đảm bảo người dùng nào chỉ được phép xem lịch sử đo đạc của chính người đó.
+## Authentication & Authorization
+- The entire login and permission granting mechanism is delegated to **Supabase Auth**.
+- The API uses the **JWT (JSON Web Token)** standard for security. Frontend files automatically attach a `Bearer Token` when making requests.
+- **Row Level Security (RLS)** is enabled on Supabase PostgreSQL to ensure that users are only allowed to view their own measurement history.
 
-## Lưu trữ Dữ liệu (Data Storage & Privacy)
-- **Video:** File video tải lên được lưu trữ tạm thời tại S3 Object Storage (Supabase). Sau khi Celery Worker phân tích và lấy xong nhịp tim, **file video sẽ bị xóa vĩnh viễn ngay lập tức** khỏi hệ thống đám mây để đảm bảo quyền riêng tư về hình ảnh.
-- **Webcam Real-time:** Dữ liệu hình ảnh từ Webcam chỉ được gửi qua WebSocket để xử lý trực tiếp trên RAM và trả về kết quả, **không hề lưu lại bất kỳ khung hình nào** xuống ổ cứng.
+## Data Storage & Privacy
+- **Videos:** Uploaded video files are temporarily stored in S3 Object Storage (Supabase). After the Celery Worker finishes analyzing and extracting the heart rate, **the video file will be permanently deleted immediately** from the cloud system to ensure image privacy.
+- **Webcam Real-time:** Image data from the Webcam is only sent via WebSocket to be processed directly in RAM and return results; **no frames are ever saved** to the hard drive.
 
-## Báo cáo Lỗ hổng (Reporting a Vulnerability)
-Nếu bạn phát hiện bất kỳ lỗ hổng bảo mật nào (chẳng hạn như lộ API Key trong mã nguồn, lỗi RLS ở Supabase, SQL Injection), vui lòng **không công khai** nó dưới dạng GitHub Issue.
-Hãy liên hệ trực tiếp với người quản trị kho lưu trữ qua email hoặc các kênh nội bộ để chúng tôi có thể khắc phục ngay lập tức. Cảm ơn bạn!
+## Reporting a Vulnerability
+If you discover any security vulnerabilities (such as exposed API Keys in the source code, RLS misconfigurations in Supabase, SQL Injection), please **do not publicly disclose** it as a GitHub Issue.
+Please contact the repository administrator directly via email or internal channels so we can resolve it immediately. Thank you!
