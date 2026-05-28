@@ -8,15 +8,16 @@
   font-size: 0.66rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--cyan-600);
+  color: var(--cyan-300);
   font-family: var(--font-mono);
 }
 
 /* Style native date picker controls to match the theme */
 .field input[type="date"] {
-  color-scheme: light;
+  color-scheme: dark;
 }
 .field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) saturate(2) hue-rotate(160deg);
   opacity: 0.8;
   cursor: pointer;
 }

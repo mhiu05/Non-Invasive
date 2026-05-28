@@ -6,8 +6,7 @@
   gap: 1rem;
   padding: 1rem 1.1rem;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.75), rgba(8, 12, 22, 0.85));
   border: 1px solid var(--line-medium);
   overflow: hidden;
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
@@ -115,13 +114,13 @@
 .vcard__decor svg { width: 100%; height: 100%; display: block; }
 
 /* ── Color variants ─────────────────────────────────── */
-.vcard--cyan    { color: var(--cyan-600); }
-.vcard--crimson { color: var(--crimson-600); }
-.vcard--violet  { color: var(--violet-600); }
-.vcard--mint    { color: var(--mint-600); }
+.vcard--cyan    { color: var(--cyan-400); }
+.vcard--crimson { color: var(--crimson-500); }
+.vcard--violet  { color: var(--violet-400); }
+.vcard--mint    { color: var(--mint-400); }
 
 /* Legacy color aliases (keep backwards compat with Upload/Profile uses) */
-.vcard--red    { color: var(--crimson-600); }
-.vcard--green  { color: var(--mint-600); }
-.vcard--blue   { color: var(--cyan-600); }
-.vcard--purple { color: var(--violet-600); }
+.vcard--red    { color: var(--crimson-500); }
+.vcard--green  { color: var(--mint-400); }
+.vcard--blue   { color: var(--cyan-400); }
+.vcard--purple { color: var(--violet-400); }

@@ -31,7 +31,7 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--cyan-600);
+  color: var(--cyan-300);
 }
 
 .live__history-btn {
@@ -41,7 +41,7 @@
   align-self: flex-start;
   padding: 0.55rem 1rem;
   border-radius: var(--radius-pill);
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--line-medium);
   color: var(--text-primary);
   font-size: 0.85rem;
@@ -51,9 +51,9 @@
 }
 
 .live__history-btn:hover {
-  border-color: rgba(2, 132, 199, 0.45);
-  color: var(--cyan-600);
-  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(34, 211, 238, 0.45);
+  color: var(--cyan-300);
+  background: rgba(34, 211, 238, 0.08);
   transform: translateY(-1px);
 }
 
@@ -76,10 +76,15 @@
   gap: 1rem;
   padding: 1.3rem;
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.7), rgba(8, 12, 22, 0.85));
   border: 1px solid var(--line-medium);
   box-shadow: var(--shadow-card);
+  transition: box-shadow 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+}
+
+.live__camera-card.active {
+  border-color: rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.15), inset 0 0 20px rgba(34, 211, 238, 0.05);
 }
 
 .live__camera-meta {
@@ -109,7 +114,7 @@
 .live__status--off {
   color: var(--text-muted);
   border-color: var(--line-medium);
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .live__status-dot {
@@ -136,7 +141,35 @@
   border-radius: var(--radius-lg);
   background: #000;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--line-strong), 0 0 0 1px rgba(14, 165, 233, 0.12);
+  box-shadow: inset 0 0 0 1px var(--line-strong), 0 0 0 1px rgba(34, 211, 238, 0.12);
+}
+
+.live__camera-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes scanline-frame {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1100%); }
+}
+
+.live__camera-frame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10%;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.15), transparent);
+  animation: scanline-frame 6s linear infinite;
+  pointer-events: none;
+  z-index: 11;
 }
 
 .live__video-overlay { aspect-ratio: 16 / 9; width: 100%; height: 100%; }
@@ -151,8 +184,8 @@
   gap: 1rem;
   text-align: center;
   background:
-    radial-gradient(ellipse at center, rgba(14, 165, 233, 0.10), transparent 60%),
-    linear-gradient(180deg, #f1f5f9, #e2e8f0);
+    radial-gradient(ellipse at center, rgba(34, 211, 238, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--ink-925), var(--ink-950));
 }
 
 .live__camera-placeholder-icon {
@@ -162,9 +195,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(14, 165, 233, 0.12);
-  border: 1px solid rgba(14, 165, 233, 0.30);
-  color: var(--cyan-600);
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.30);
+  color: var(--cyan-300);
   animation: float 4s var(--ease-in-out) infinite;
 }
 
@@ -193,7 +226,7 @@
   position: absolute;
   width: 22px;
   height: 22px;
-  border-color: rgba(14, 165, 233, 0.50);
+  border-color: rgba(34, 211, 238, 0.50);
   border-style: solid;
 }
 .live__corner--tl { top: 0;    left: 0;    border-width: 1.5px 0 0 1.5px; }
@@ -235,7 +268,7 @@
 
 .live__age-input {
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(8, 12, 22, 0.6);
   border: 1px solid var(--line-medium);
   border-radius: var(--radius-md);
   color: var(--text-primary);
@@ -245,9 +278,9 @@
 }
 
 .live__age-input:focus {
-  border-color: rgba(14, 165, 233, 0.55);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10);
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(8, 18, 30, 0.75);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.10);
 }
 
 .live__age-hint {
@@ -312,7 +345,7 @@
   height: 6px;
   width: 100%;
   border-radius: var(--radius-pill);
-  background: rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
 
@@ -321,7 +354,7 @@
   inset: 0 auto 0 0;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--cyan-500), var(--violet-500));
-  box-shadow: 0 0 12px rgba(14, 165, 233, 0.55);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.55);
   transition: width 0.4s var(--ease-out);
 }
 
@@ -365,9 +398,17 @@
   gap: 0.65rem;
   padding: 1.05rem 1.1rem;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--line-medium);
+  background: rgba(15, 22, 38, 0.45);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(34, 211, 238, 0.05);
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+}
+
+.live__chart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2), inset 0 0 30px rgba(34, 211, 238, 0.1);
 }
 
 .live__chart-head {
@@ -388,7 +429,7 @@
 }
 
 .live__chart-title svg {
-  color: var(--cyan-600);
+  color: var(--cyan-300);
 }
 
 .live__chart-tag {
@@ -399,7 +440,7 @@
 }
 
 .live__chart-wrap {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(3, 6, 13, 0.55);
   border-radius: var(--radius-md);
   padding: 0.5rem;
   border: 1px solid var(--line-soft);
