@@ -71,13 +71,13 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--cyan-300);
+  color: var(--cyan-600);
   letter-spacing: -0.015em;
 }
 
 .hero__title-flash {
   position: relative;
-  background: linear-gradient(120deg, var(--cyan-300) 0%, var(--cyan-400) 50%, var(--violet-400) 100%);
+  background: linear-gradient(120deg, var(--cyan-600) 0%, var(--cyan-500) 50%, var(--violet-600) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -129,14 +129,14 @@
 
 .btn--primary {
   background: linear-gradient(135deg, var(--cyan-500) 0%, var(--cyan-600) 50%, var(--violet-600) 110%);
-  color: #052028;
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 18px 40px -16px rgba(34, 211, 238, 0.55), 0 2px 0 rgba(255,255,255,0.2) inset;
+  box-shadow: 0 18px 40px -16px rgba(14, 165, 233, 0.40), 0 2px 0 rgba(255,255,255,0.2) inset;
 }
 
 .btn--primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 26px 50px -16px rgba(34, 211, 238, 0.65), 0 2px 0 rgba(255,255,255,0.25) inset;
+  box-shadow: 0 26px 50px -16px rgba(14, 165, 233, 0.50), 0 2px 0 rgba(255,255,255,0.25) inset;
 }
 
 .btn__glow {
@@ -226,8 +226,8 @@
   position: absolute;
   inset: -10% -10% 0 -10%;
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(6, 182, 212, 0.20), transparent 55%),
-    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15), transparent 55%);
+    radial-gradient(ellipse at 30% 20%, rgba(14, 165, 233, 0.12), transparent 55%),
+    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08), transparent 55%);
   z-index: -1;
   filter: blur(40px);
   border-radius: 50%;
@@ -311,7 +311,7 @@
   font-size: 2.6rem;
   line-height: 1;
   letter-spacing: -0.04em;
-  background: linear-gradient(120deg, #ffffff 0%, var(--cyan-300) 100%);
+  background: linear-gradient(120deg, var(--text-primary) 0%, var(--cyan-600) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -356,7 +356,7 @@
   border: 1px solid var(--line-soft);
 }
 
-.hero__vchip--cyan   { border-color: rgba(34, 211, 238, 0.30); }
+.hero__vchip--cyan   { border-color: rgba(14, 165, 233, 0.30); }
 .hero__vchip--mint   { border-color: rgba(52, 211, 153, 0.30); }
 .hero__vchip--violet { border-color: rgba(167, 139, 250, 0.30); }
 
@@ -375,7 +375,7 @@
   letter-spacing: -0.01em;
 }
 
-.hero__vchip--cyan   .hero__vchip-value { color: var(--cyan-300); }
+.hero__vchip--cyan   .hero__vchip-value { color: var(--cyan-600); }
 .hero__vchip--mint   .hero__vchip-value { color: var(--mint-400); }
 .hero__vchip--violet .hero__vchip-value { color: var(--violet-400); }
 
@@ -405,7 +405,7 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--cyan-300);
+  color: var(--cyan-600);
 }
 
 .section__sub {
@@ -432,9 +432,10 @@
   gap: 1rem;
   padding: 1.5rem 1.4rem 1.7rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.70));
+  background: rgba(255, 255, 255, 0.65);
   border: 1px solid var(--line-medium);
   overflow: hidden;
+  backdrop-filter: blur(24px);
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
 }
 
@@ -537,8 +538,9 @@
 .workflow {
   padding: 2.5rem 1.5rem 3rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
-  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--line-medium);
   position: relative;
   overflow: hidden;
 }
@@ -572,7 +574,7 @@
   gap: 0.6rem;
   padding: 1.4rem 1.2rem;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid var(--line-medium);
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
 }
@@ -636,7 +638,7 @@
   gap: 0.7rem;
   padding: 1.3rem;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.65);
   border: 1px solid var(--line-medium);
   border-left-width: 3px;
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
@@ -795,5 +797,5 @@
   letter-spacing: 0;
   font-size: 0.95rem;
   font-style: italic;
-  color: var(--cyan-300);
+  color: var(--cyan-600);
 }

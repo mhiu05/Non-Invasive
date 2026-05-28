@@ -16,7 +16,8 @@
   position: relative;
   padding: 2.5rem 2rem 2rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.80));
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
   border: 1px solid var(--line-medium);
   box-shadow: var(--shadow-card);
   overflow: hidden;
@@ -38,8 +39,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 50% at 10% 0%, rgba(6, 182, 212, 0.18), transparent 60%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(139, 92, 246, 0.14), transparent 60%);
+    radial-gradient(ellipse 60% 50% at 10% 0%, rgba(14, 165, 233, 0.12), transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(139, 92, 246, 0.10), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -58,7 +59,7 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.30), rgba(139, 92, 246, 0.30));
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.20), rgba(139, 92, 246, 0.20));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,14 +72,14 @@
   font-size: 1.6rem;
   color: var(--cyan-600);
   line-height: 1;
-  text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+  text-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
 }
 
 .profile__avatar-ring {
   position: absolute;
   inset: -3px;
   border-radius: 50%;
-  border: 1.5px solid rgba(6, 182, 212, 0.45);
+  border: 1.5px solid rgba(14, 165, 233, 0.45);
   animation: brandPulse 2.6s var(--ease-out) infinite;
 }
 
@@ -99,7 +100,7 @@
   font-size: clamp(1.5rem, 2.8vw, 2rem);
   font-weight: 600;
   letter-spacing: -0.025em;
-  background: linear-gradient(120deg, #ffffff 0%, var(--cyan-300) 100%);
+  background: linear-gradient(120deg, var(--text-primary) 0%, var(--cyan-600) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -133,7 +134,7 @@
   gap: 0.7rem;
   padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid var(--line-medium);
   transition: transform 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
 }
@@ -144,8 +145,8 @@
 }
 
 .profile__hero-stat--accent {
-  border-color: rgba(6, 182, 212, 0.30);
-  background: rgba(6, 182, 212, 0.06);
+  border-color: rgba(14, 165, 233, 0.30);
+  background: rgba(14, 165, 233, 0.06);
 }
 
 .profile__hero-stat-icon {
@@ -155,7 +156,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: rgba(6, 182, 212, 0.14);
+  background: rgba(14, 165, 233, 0.14);
   color: var(--cyan-600);
 }
 
@@ -206,7 +207,8 @@
   padding: 5rem 2rem;
   text-align: center;
   border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.5));
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
   border: 1px dashed var(--line-medium);
 }
 
@@ -217,9 +219,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(34, 211, 238, 0.10);
-  border: 1px solid rgba(34, 211, 238, 0.25);
-  color: var(--cyan-300);
+  background: rgba(14, 165, 233, 0.10);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  color: var(--cyan-600);
   animation: float 4s var(--ease-in-out) infinite;
 }
 
@@ -254,7 +256,8 @@
   gap: 0.7rem;
   padding: 1.3rem 1.25rem;
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
   border: 1px solid var(--line-medium);
   overflow: hidden;
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
@@ -362,7 +365,8 @@
   gap: 0.7rem;
   padding: 1.3rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
   border: 1px solid var(--line-medium);
   box-shadow: var(--shadow-card);
   overflow: hidden;
@@ -393,7 +397,7 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--cyan-300);
+  color: var(--cyan-600);
 }
 
 .chartcard__icon {
@@ -405,7 +409,7 @@
   flex: 1;
   min-height: 220px;
   padding: 0.5rem 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.7);
   border-radius: var(--radius-md);
   border: 1px solid var(--line-soft);
 }
@@ -417,7 +421,8 @@
   gap: 0.8rem;
   padding: 1.3rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
   border: 1px solid var(--line-medium);
   box-shadow: var(--shadow-card);
   grid-column: span 1;
@@ -451,7 +456,7 @@
 }
 
 .ptable thead {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.8);
   text-align: left;
 }
 
@@ -479,7 +484,7 @@
 }
 
 .ptable tbody tr:hover {
-  background: rgba(6, 182, 212, 0.04);
+  background: rgba(14, 165, 233, 0.04);
 }
 
 .ptable tbody tr:last-child td {
@@ -515,8 +520,8 @@
 
 .ptable__src--realtime {
   color: var(--cyan-600);
-  border-color: rgba(6, 182, 212, 0.30);
-  background: rgba(6, 182, 212, 0.08);
+  border-color: rgba(14, 165, 233, 0.30);
+  background: rgba(14, 165, 233, 0.08);
 }
 
 .ptable__src--video {
@@ -546,8 +551,8 @@
   gap: 0.45rem;
   padding: 0.55rem 1.5rem;
   border-radius: var(--radius-pill);
-  background: rgba(6, 182, 212, 0.08);
-  border: 1px solid rgba(6, 182, 212, 0.30);
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.30);
   color: var(--cyan-600);
   font-size: 0.85rem;
   font-weight: 500;
@@ -556,8 +561,8 @@
 }
 
 .profile__loadmore:hover:not(:disabled) {
-  background: rgba(6, 182, 212, 0.14);
-  border-color: rgba(6, 182, 212, 0.50);
+  background: rgba(14, 165, 233, 0.14);
+  border-color: rgba(14, 165, 233, 0.50);
   transform: translateY(-2px);
 }
 
