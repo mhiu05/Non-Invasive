@@ -55,7 +55,7 @@ def build_model(model_name: str, args):
     name = model_name.lower()
 
     if name == "deepphys":
-        from models.DeepPhys import DeepPhys
+        from neural_methods.model.DeepPhys import DeepPhys
         model = DeepPhys(img_size=args.img_size)
         # Input: (N, 6, H, W)  — DiffNorm (3ch) + Standardized (3ch)
         dummy = torch.zeros(1, 6, args.img_size, args.img_size)
@@ -63,28 +63,28 @@ def build_model(model_name: str, args):
         dynamic = {"appearance_motion_input": {0: "batch"}, "output": {0: "batch"}}
 
     elif name == "tscan":
-        from models.TSCAN import TSCAN
+        from neural_methods.model.TSCAN import TSCAN
         model = TSCAN(frame_depth=args.frame_depth, img_size=args.img_size)
         dummy = torch.zeros(args.frame_depth, 6, args.img_size, args.img_size)
         input_names = ["frame_sequence"]
         dynamic = {"frame_sequence": {0: "T"}, "output": {0: "T"}}
 
     elif name == "physnet":
-        from models.PhysNet import PhysNet_padding_Encoder_Decoder_MAX
+        from neural_methods.model.PhysNet import PhysNet_padding_Encoder_Decoder_MAX
         model = PhysNet_padding_Encoder_Decoder_MAX(frames=args.chunk)
         dummy = torch.zeros(1, 3, args.chunk, args.img_size, args.img_size)
         input_names = ["video_clip"]
         dynamic = {"video_clip": {0: "batch"}, "output": {0: "batch"}}
 
     elif name == "efficientphys":
-        from models.EfficientPhys import EfficientPhys
+        from neural_methods.model.EfficientPhys import EfficientPhys
         model = EfficientPhys(frame_depth=args.frame_depth, img_size=args.img_size)
         dummy = torch.zeros(args.frame_depth + 1, 3, args.img_size, args.img_size)
         input_names = ["frame_sequence"]
         dynamic = {"frame_sequence": {0: "T"}, "output": {0: "T"}}
 
     elif name == "physformer":
-        from models.PhysFormer import ViT_ST_ST_Compact3_TDC_gra_sharp
+        from neural_methods.model.PhysFormer import ViT_ST_ST_Compact3_TDC_gra_sharp
         # PhysFormer requires img_size=128 (so stem+patch output is 4×4 spatial)
         # and chunk=160 (standard training length); override any CLI values.
         pf_chunk = 160
@@ -100,21 +100,21 @@ def build_model(model_name: str, args):
         dynamic = {"video_clip": {0: "batch"}, "output": {0: "batch"}}
 
     elif name == "physmamba":
-        from models.PhysMamba import PhysMamba
+        from neural_methods.model.PhysMamba import PhysMamba
         model = PhysMamba(frames=args.chunk)
         dummy = torch.zeros(1, 3, args.chunk, args.img_size, args.img_size)
         input_names = ["video_clip"]
         dynamic = {"video_clip": {0: "batch"}, "output": {0: "batch"}}
 
     elif name == "rhythmformer":
-        from models.RhythmFormer import RhythmFormer
+        from neural_methods.model.RhythmFormer import RhythmFormer
         model = RhythmFormer()
         dummy = torch.zeros(1, args.chunk, 3, args.img_size, args.img_size)
         input_names = ["video_clip"]
         dynamic = {"video_clip": {0: "batch"}, "output": {0: "batch"}}
 
     elif name == "bigsmall":
-        from models.BigSmall import BigSmall
+        from neural_methods.model.BigSmall import BigSmall
         model = BigSmall(n_segment=args.chunk)
         model = BigSmallONNXWrapper(model)
         dummy_big   = torch.zeros(args.chunk, 3, 144, 144)
@@ -128,14 +128,14 @@ def build_model(model_name: str, args):
         }
 
     elif name == "ibvpnet":
-        from models.iBVPNet import iBVPNet
+        from neural_methods.model.iBVPNet import iBVPNet
         model = iBVPNet(frames=args.chunk, in_channels=3)
         dummy = torch.zeros(1, 3, args.chunk + 1, args.img_size, args.img_size)
         input_names = ["video_clip"]
         dynamic = {"video_clip": {0: "batch"}, "output": {0: "batch"}}
 
     elif name == "factorizephys":
-        from models.FactorizePhys.FactorizePhys import FactorizePhys
+        from neural_methods.model.FactorizePhys.FactorizePhys import FactorizePhys
         md_config = {
             "FRAME_NUM": args.chunk, "MD_FSAM": True, "MD_TYPE": "NMF",
             "MD_R": 1, "MD_S": 1, "MD_STEPS": 3,

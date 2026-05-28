@@ -1,82 +1,217 @@
-"""Standard evaluation metrics for rPPG heart rate estimation."""
-
 import numpy as np
-from scipy.signal import periodogram
+import pandas as pd
+import torch
+from rPPG.evaluation.post_process import *
+from tqdm import tqdm
+from rPPG.evaluation.BlandAltmanPy import BlandAltman
+
+def read_label(dataset):
+    """Read manually corrected labels."""
+    df = pd.read_csv("label/{0}_Comparison.csv".format(dataset))
+    out_dict = df.to_dict(orient='index')
+    out_dict = {str(value['VideoID']): value for key, value in out_dict.items()}
+    return out_dict
 
 
-def compute_mae(preds: np.ndarray, labels: np.ndarray) -> tuple[float, float]:
-    """Return (MAE, standard error) in BPM."""
-    err = np.abs(preds - labels)
-    return float(np.mean(err)), float(np.std(err) / np.sqrt(len(err)))
+def read_hr_label(feed_dict, index):
+    """Read manually corrected UBFC labels."""
+    # For UBFC only
+    if index[:7] == 'subject':
+        index = index[7:]
+    video_dict = feed_dict[index]
+    if video_dict['Preferred'] == 'Peak Detection':
+        hr = video_dict['Peak Detection']
+    elif video_dict['Preferred'] == 'FFT':
+        hr = video_dict['FFT']
+    else:
+        hr = video_dict['Peak Detection']
+    return index, hr
 
 
-def compute_rmse(preds: np.ndarray, labels: np.ndarray) -> tuple[float, float]:
-    """Return (RMSE, standard error) in BPM."""
-    sq = (preds - labels) ** 2
-    return float(np.sqrt(np.mean(sq))), float(np.sqrt(np.std(sq) / np.sqrt(len(sq))))
+def _reform_data_from_dict(data, flatten=True):
+    """Helper func for calculate metrics: reformat predictions and labels from dicts. """
+    sort_data = sorted(data.items(), key=lambda x: x[0])
+    sort_data = [i[1] for i in sort_data]
+    sort_data = torch.cat(sort_data, dim=0)
+
+    if flatten:
+        sort_data = np.reshape(sort_data.cpu(), (-1))
+    else:
+        sort_data = np.array(sort_data.cpu())
+
+    return sort_data
 
 
-def compute_mape(preds: np.ndarray, labels: np.ndarray) -> tuple[float, float]:
-    """Return (MAPE, standard error) as percentage."""
-    rel = np.abs(preds - labels) / (np.abs(labels) + 1e-9)
-    return float(np.mean(rel) * 100.0), float(np.std(rel) / np.sqrt(len(rel)) * 100.0)
+def calculate_metrics(predictions, labels, config):
+    """Calculate rPPG Metrics (MAE, RMSE, MAPE, Pearson Coef.)."""
+    predict_hr_fft_all = list()
+    gt_hr_fft_all = list()
+    predict_hr_peak_all = list()
+    gt_hr_peak_all = list()
+    SNR_all = list()
+    MACC_all = list()
+    print("Calculating metrics!")
+    for index in tqdm(predictions.keys(), ncols=80):
+        prediction = _reform_data_from_dict(predictions[index])
+        label = _reform_data_from_dict(labels[index])
 
+        video_frame_size = prediction.shape[0]
+        if config.INFERENCE.EVALUATION_WINDOW.USE_SMALLER_WINDOW:
+            window_frame_size = config.INFERENCE.EVALUATION_WINDOW.WINDOW_SIZE * config.TEST.DATA.FS
+            if window_frame_size > video_frame_size:
+                window_frame_size = video_frame_size
+        else:
+            window_frame_size = video_frame_size
 
-def compute_pearson(preds: np.ndarray, labels: np.ndarray) -> tuple[float, float]:
-    """Return (Pearson r, standard error)."""
-    n = len(preds)
-    if n < 2:
-        return float("nan"), float("nan")
-    r = float(np.corrcoef(preds, labels)[0, 1])
-    se = float(np.sqrt(max(0.0, (1 - r**2) / (n - 2))))
-    return r, se
+        for i in range(0, len(prediction), window_frame_size):
+            pred_window = prediction[i:i+window_frame_size]
+            label_window = label[i:i+window_frame_size]
 
+            if len(pred_window) < 9:
+                print(f"Window frame size of {len(pred_window)} is smaller than minimum pad length of 9. Window ignored!")
+                continue
 
-def compute_snr(
-    pred_ppg: np.ndarray,
-    hr_label_bpm: float,
-    fs: float,
-    low_pass: float = 0.6,
-    high_pass: float = 3.3,
-) -> float:
-    """Signal-to-noise ratio (dB) at the HR frequency."""
-    N = 1
-    while N < len(pred_ppg):
-        N *= 2
-    freqs, pxx = periodogram(pred_ppg, fs=fs, nfft=N, detrend=False)
-    f1, f2 = hr_label_bpm / 60.0, 2.0 * hr_label_bpm / 60.0
-    dev = 6.0 / 60.0
-    sig_mask = (
-        ((freqs >= f1 - dev) & (freqs <= f1 + dev))
-        | ((freqs >= f2 - dev) & (freqs <= f2 + dev))
-    )
-    noise_mask = (freqs >= low_pass) & (freqs <= high_pass) & ~sig_mask
-    sig_power = pxx[sig_mask].sum()
-    noise_power = pxx[noise_mask].sum()
-    if noise_power == 0:
-        return float("inf")
-    return float(10.0 * np.log10(sig_power / noise_power))
+            if config.TEST.DATA.PREPROCESS.LABEL_TYPE == "Standardized" or \
+                    config.TEST.DATA.PREPROCESS.LABEL_TYPE == "Raw":
+                diff_flag_test = False
+            elif config.TEST.DATA.PREPROCESS.LABEL_TYPE == "DiffNormalized":
+                diff_flag_test = True
+            else:
+                raise ValueError("Unsupported label type in testing!")
+            
+            if config.INFERENCE.EVALUATION_METHOD == "peak detection":
+                gt_hr_peak, pred_hr_peak, SNR, macc = calculate_metric_per_video(
+                    pred_window, label_window, diff_flag=diff_flag_test, fs=config.TEST.DATA.FS, hr_method='Peak')
+                gt_hr_peak_all.append(gt_hr_peak)
+                predict_hr_peak_all.append(pred_hr_peak)
+                SNR_all.append(SNR)
+                MACC_all.append(macc)
+            elif config.INFERENCE.EVALUATION_METHOD == "FFT":
+                gt_hr_fft, pred_hr_fft, SNR, macc = calculate_metric_per_video(
+                    pred_window, label_window, diff_flag=diff_flag_test, fs=config.TEST.DATA.FS, hr_method='FFT')
+                gt_hr_fft_all.append(gt_hr_fft)
+                predict_hr_fft_all.append(pred_hr_fft)
+                SNR_all.append(SNR)
+                MACC_all.append(macc)
+            else:
+                raise ValueError("Inference evaluation method name wrong!")
+    
+    # Filename ID to be used in any results files (e.g., Bland-Altman plots) that get saved
+    if config.TOOLBOX_MODE == 'train_and_test':
+        filename_id = config.TRAIN.MODEL_FILE_NAME
+    elif config.TOOLBOX_MODE == 'only_test':
+        model_file_root = config.INFERENCE.MODEL_PATH.split("/")[-1].split(".pth")[0]
+        filename_id = model_file_root + "_" + config.TEST.DATA.DATASET
+    else:
+        raise ValueError('Metrics.py evaluation only supports train_and_test and only_test!')
 
-
-def aggregate_metrics(hr_preds: np.ndarray, gt_hrs: np.ndarray, snr_vals: np.ndarray) -> dict:
-    """Compute and print all aggregate metrics, return as dict."""
-    mae, mae_se = compute_mae(hr_preds, gt_hrs)
-    rmse, rmse_se = compute_rmse(hr_preds, gt_hrs)
-    mape, mape_se = compute_mape(hr_preds, gt_hrs)
-    pearson, pearson_se = compute_pearson(hr_preds, gt_hrs)
-    mean_snr = float(np.mean(snr_vals))
-    snr_se = float(np.std(snr_vals) / np.sqrt(len(snr_vals)))
-
-    print(f"MAE     : {mae:.4f} +/- {mae_se:.4f} bpm")
-    print(f"RMSE    : {rmse:.4f} +/- {rmse_se:.4f} bpm")
-    print(f"MAPE    : {mape:.4f} +/- {mape_se:.4f} %")
-    print(f"Pearson : {pearson:.4f} +/- {pearson_se:.4f}")
-    print(f"SNR     : {mean_snr:.4f} +/- {snr_se:.4f} dB")
-
-    return {
-        "MAE":     {"value": mae,     "se": mae_se,     "unit": "bpm"},
-        "RMSE":    {"value": rmse,    "se": rmse_se,    "unit": "bpm"},
-        "MAPE":    {"value": mape,    "se": mape_se,    "unit": "%"},
-        "Pearson": {"value": pearson, "se": pearson_se, "unit": ""},
-        "SNR":     {"value": mean_snr,"se": snr_se,     "unit": "dB"},
-    }
+    if config.INFERENCE.EVALUATION_METHOD == "FFT":
+        gt_hr_fft_all = np.array(gt_hr_fft_all)
+        predict_hr_fft_all = np.array(predict_hr_fft_all)
+        SNR_all = np.array(SNR_all)
+        MACC_all = np.array(MACC_all)
+        num_test_samples = len(predict_hr_fft_all)
+        for metric in config.TEST.METRICS:
+            if metric == "MAE":
+                MAE_FFT = np.mean(np.abs(predict_hr_fft_all - gt_hr_fft_all))
+                standard_error = np.std(np.abs(predict_hr_fft_all - gt_hr_fft_all)) / np.sqrt(num_test_samples)
+                print("FFT MAE (FFT Label): {0} +/- {1}".format(MAE_FFT, standard_error))
+            elif metric == "RMSE":
+                # Calculate the squared errors, then RMSE, in order to allow
+                # for a more robust and intuitive standard error that won't
+                # be influenced by abnormal distributions of errors.
+                squared_errors = np.square(predict_hr_fft_all - gt_hr_fft_all)
+                RMSE_FFT = np.sqrt(np.mean(squared_errors))
+                standard_error = np.sqrt(np.std(squared_errors) / np.sqrt(num_test_samples))
+                print("FFT RMSE (FFT Label): {0} +/- {1}".format(RMSE_FFT, standard_error))
+            elif metric == "MAPE":
+                MAPE_FFT = np.mean(np.abs((predict_hr_fft_all - gt_hr_fft_all) / gt_hr_fft_all)) * 100
+                standard_error = np.std(np.abs((predict_hr_fft_all - gt_hr_fft_all) / gt_hr_fft_all)) / np.sqrt(num_test_samples) * 100
+                print("FFT MAPE (FFT Label): {0} +/- {1}".format(MAPE_FFT, standard_error))
+            elif metric == "Pearson":
+                Pearson_FFT = np.corrcoef(predict_hr_fft_all, gt_hr_fft_all)
+                correlation_coefficient = Pearson_FFT[0][1]
+                standard_error = np.sqrt((1 - correlation_coefficient**2) / (num_test_samples - 2))
+                print("FFT Pearson (FFT Label): {0} +/- {1}".format(correlation_coefficient, standard_error))
+            elif metric == "SNR":
+                SNR_FFT = np.mean(SNR_all)
+                standard_error = np.std(SNR_all) / np.sqrt(num_test_samples)
+                print("FFT SNR (FFT Label): {0} +/- {1} (dB)".format(SNR_FFT, standard_error))
+            elif metric == "MACC":
+                MACC_avg = np.mean(MACC_all)
+                standard_error = np.std(MACC_all) / np.sqrt(num_test_samples)
+                print("FFT MACC (FFT Label): {0} +/- {1}".format(MACC_avg, standard_error))
+            elif "AU" in metric:
+                pass
+            elif "BA" in metric:  
+                compare = BlandAltman(gt_hr_fft_all, predict_hr_fft_all, config, averaged=True)
+                compare.scatter_plot(
+                    x_label='GT PPG HR [bpm]',
+                    y_label='rPPG HR [bpm]',
+                    show_legend=True, figure_size=(5, 5),
+                    the_title=f'{filename_id}_FFT_BlandAltman_ScatterPlot',
+                    file_name=f'{filename_id}_FFT_BlandAltman_ScatterPlot.pdf')
+                compare.difference_plot(
+                    x_label='Difference between rPPG HR and GT PPG HR [bpm]',
+                    y_label='Average of rPPG HR and GT PPG HR [bpm]',
+                    show_legend=True, figure_size=(5, 5),
+                    the_title=f'{filename_id}_FFT_BlandAltman_DifferencePlot',
+                    file_name=f'{filename_id}_FFT_BlandAltman_DifferencePlot.pdf')
+            else:
+                raise ValueError("Wrong Test Metric Type")
+    elif config.INFERENCE.EVALUATION_METHOD == "peak detection":
+        gt_hr_peak_all = np.array(gt_hr_peak_all)
+        predict_hr_peak_all = np.array(predict_hr_peak_all)
+        SNR_all = np.array(SNR_all)
+        MACC_all = np.array(MACC_all)
+        num_test_samples = len(predict_hr_peak_all)
+        for metric in config.TEST.METRICS:
+            if metric == "MAE":
+                MAE_PEAK = np.mean(np.abs(predict_hr_peak_all - gt_hr_peak_all))
+                standard_error = np.std(np.abs(predict_hr_peak_all - gt_hr_peak_all)) / np.sqrt(num_test_samples)
+                print("Peak MAE (Peak Label): {0} +/- {1}".format(MAE_PEAK, standard_error))
+            elif metric == "RMSE":
+                # Calculate the squared errors, then RMSE, in order to allow
+                # for a more robust and intuitive standard error that won't
+                # be influenced by abnormal distributions of errors.
+                squared_errors = np.square(predict_hr_peak_all - gt_hr_peak_all)
+                RMSE_PEAK = np.sqrt(np.mean(squared_errors))
+                standard_error = np.sqrt(np.std(squared_errors) / np.sqrt(num_test_samples))
+                print("PEAK RMSE (Peak Label): {0} +/- {1}".format(RMSE_PEAK, standard_error))
+            elif metric == "MAPE":
+                MAPE_PEAK = np.mean(np.abs((predict_hr_peak_all - gt_hr_peak_all) / gt_hr_peak_all)) * 100
+                standard_error = np.std(np.abs((predict_hr_peak_all - gt_hr_peak_all) / gt_hr_peak_all)) / np.sqrt(num_test_samples) * 100
+                print("PEAK MAPE (Peak Label): {0} +/- {1}".format(MAPE_PEAK, standard_error))
+            elif metric == "Pearson":
+                Pearson_PEAK = np.corrcoef(predict_hr_peak_all, gt_hr_peak_all)
+                correlation_coefficient = Pearson_PEAK[0][1]
+                standard_error = np.sqrt((1 - correlation_coefficient**2) / (num_test_samples - 2))
+                print("PEAK Pearson (Peak Label): {0} +/- {1}".format(correlation_coefficient, standard_error))
+            elif metric == "SNR":
+                SNR_PEAK = np.mean(SNR_all)
+                standard_error = np.std(SNR_all) / np.sqrt(num_test_samples)
+                print("PEAK SNR (PEAK Label): {0} +/- {1} (dB)".format(SNR_PEAK, standard_error))
+            elif metric == "MACC":
+                MACC_avg = np.mean(MACC_all)
+                standard_error = np.std(MACC_all) / np.sqrt(num_test_samples)
+                print("PEAK MACC (PEAK Label): {0} +/- {1}".format(MACC_avg, standard_error))
+            elif "AU" in metric:
+                pass
+            elif "BA" in metric:
+                compare = BlandAltman(gt_hr_peak_all, predict_hr_peak_all, config, averaged=True)
+                compare.scatter_plot(
+                    x_label='GT PPG HR [bpm]',
+                    y_label='rPPG HR [bpm]',
+                    show_legend=True, figure_size=(5, 5),
+                    the_title=f'{filename_id}_Peak_BlandAltman_ScatterPlot',
+                    file_name=f'{filename_id}_Peak_BlandAltman_ScatterPlot.pdf')
+                compare.difference_plot(
+                    x_label='Difference between rPPG HR and GT PPG HR [bpm]',
+                    y_label='Average of rPPG HR and GT PPG HR [bpm]',
+                    show_legend=True, figure_size=(5, 5),
+                    the_title=f'{filename_id}_Peak_BlandAltman_DifferencePlot',
+                    file_name=f'{filename_id}_Peak_BlandAltman_DifferencePlot.pdf')
+            else:
+                raise ValueError("Wrong Test Metric Type")
+    else:
+        raise ValueError("Inference evaluation method name wrong!")

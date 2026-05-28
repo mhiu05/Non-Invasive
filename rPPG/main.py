@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from config import get_config
 from dataset import data_loader
-from trainers.BaseTrainer import BaseTrainer
+from neural_methods.trainer.BaseTrainer import BaseTrainer
 from unsupervised.unsupervised_predictor import unsupervised_predict
 from torch.utils.data import DataLoader
 
@@ -66,13 +66,13 @@ def _get_trainer(config, data_loader_dict) -> BaseTrainer:
     name = config.MODEL.NAME
     try:
         import importlib
-        module = importlib.import_module(f"trainers.{name}Trainer")
+        module = importlib.import_module(f"neural_methods.trainer.{name}Trainer")
         cls = getattr(module, f"{name}Trainer")
         return cls(config, data_loader_dict)
     except (ModuleNotFoundError, AttributeError):
         raise ValueError(
             f"Trainer for '{name}' not found. "
-            f"Expected trainers/{name}Trainer.py with class {name}Trainer."
+            f"Expected neural_methods/trainer/{name}Trainer.py with class {name}Trainer."
         )
 
 
