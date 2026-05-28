@@ -13,7 +13,7 @@ A non-invasive biometric measurement system from facial videos — extracting he
 
 ## 🏗 System Architecture
 
-![ARCHITECTURE](.figures\architecture.png)
+![ARCHITECTURE](.figures/architecture.png)
 
 The system is designed with 4 main layers:
 - **Computer Vision & rPPG**: Use MediaPipe for Face Mesh, combined with ONNX Runtime to run the advanced rPPG deep learning model (FactorizePhys).
