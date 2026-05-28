@@ -1,11 +1,13 @@
 .face-overlay-wrapper {
   position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .face-overlay-video {
+  display: block;
   height: 100%;
   width: 100%;
-  border-radius: 0.75rem;
   object-fit: cover;
 }
 
@@ -13,16 +15,33 @@
   pointer-events: none;
   position: absolute;
   inset: 0;
-  border-radius: 0.75rem;
 }
 
 .face-overlay-noface {
   position: absolute;
-  bottom: 0.5rem;
-  left: 0.5rem;
-  border-radius: 0.375rem;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  color: var(--color-white);
+  bottom: 0.75rem;
+  left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: rgba(8, 12, 22, 0.85);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: var(--crimson-300);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  z-index: 6;
+}
+
+.face-overlay-noface-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--crimson-500);
+  box-shadow: 0 0 8px var(--crimson-500);
+  animation: pulseDot 1.2s var(--ease-in-out) infinite;
 }

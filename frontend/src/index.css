@@ -1,74 +1,274 @@
+/* =============================================================
+   NIHealth — Bio-luminescent Medical Tech
+   Global design tokens, typography, and atmosphere
+   ============================================================= */
+
 :root {
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
-  --color-blue-50: #eff6ff;
-  --color-blue-100: #dbeafe;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  --color-red-500: #ef4444;
-  --color-green-500: #22c55e;
-  --color-emerald-500: #10b981;
-  --color-rose-500: #f43f5e;
-  --color-white: #ffffff;
-  --color-black: #000000;
+  /* ── Brand neutrals (deep midnight) ───────────────────────── */
+  --ink-950: #03060d;
+  --ink-925: #06090f;
+  --ink-900: #0a0f1c;
+  --ink-850: #0e1422;
+  --ink-800: #131a2b;
+  --ink-700: #1d2538;
+  --ink-600: #2a3552;
+  --ink-500: #3c4868;
+  --ink-400: #5b6789;
+  --ink-300: #8290b3;
+  --ink-200: #b6c0db;
+  --ink-100: #dfe5f4;
+  --ink-50:  #f3f6ff;
+
+  /* ── Bio-luminescent accents ──────────────────────────────── */
+  --cyan-500: #22d3ee;
+  --cyan-400: #67e8f9;
+  --cyan-300: #a5f3fc;
+  --cyan-600: #06b6d4;
+  --cyan-700: #0e7490;
+
+  --mint-500: #34d399;
+  --mint-400: #6ee7b7;
+  --mint-600: #10b981;
+  --mint-700: #059669;
+
+  --crimson-500: #f43f5e;
+  --crimson-400: #fb7185;
+  --crimson-600: #e11d48;
+  --crimson-300: #fda4af;
+
+  --gold-500: #f5b800;
+  --gold-400: #fbbf24;
+  --gold-300: #fcd34d;
+  --gold-600: #d97706;
+
+  --violet-500: #a78bfa;
+  --violet-400: #c4b5fd;
+  --violet-600: #8b5cf6;
+
+  --rose-500: #ec4899;
+
+  /* ── Aliases (semantic) ───────────────────────────────────── */
+  --bg-page: var(--ink-925);
+  --bg-deeper: var(--ink-950);
+  --bg-surface: rgba(15, 22, 38, 0.65);
+  --bg-surface-solid: var(--ink-850);
+  --bg-elevated: rgba(20, 28, 48, 0.85);
+
+  --line-soft: rgba(148, 175, 220, 0.10);
+  --line-medium: rgba(148, 175, 220, 0.18);
+  --line-strong: rgba(148, 175, 220, 0.32);
+
+  --text-primary: #eef2ff;
+  --text-secondary: #a8b3d4;
+  --text-muted: #6c7898;
+  --text-faint: #4a546f;
+
+  --accent: var(--cyan-500);
+  --accent-soft: rgba(34, 211, 238, 0.14);
+  --accent-glow: 0 0 32px rgba(34, 211, 238, 0.45);
+
+  --signal-positive: var(--mint-500);
+  --signal-negative: var(--crimson-500);
+  --signal-warning: var(--gold-400);
+
+  /* ── Shadows & glows ──────────────────────────────────────── */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 24px 60px -28px rgba(0,0,0,0.7), 0 2px 0 rgba(0,0,0,0.4);
+  --shadow-elev: 0 1px 0 rgba(255,255,255,0.06) inset, 0 40px 80px -32px rgba(2,6,23,0.85);
+  --shadow-pop:  0 30px 80px -20px rgba(34, 211, 238, 0.25);
+
+  /* ── Type ─────────────────────────────────────────────────── */
+  --font-display: "Bricolage Grotesque", "Outfit", system-ui, sans-serif;
+  --font-body: "Outfit", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "Instrument Serif", "Times New Roman", serif;
+
+  /* ── Geometry ─────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ── Motion ───────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
+/* =============================================================
+   Reset & base
+   ============================================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+
 html {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
-  color: var(--color-slate-800);
-  background-color: var(--color-white);
+  color: var(--text-primary);
+  background: var(--bg-page);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
-:root.dark body {
-  color: var(--color-slate-100);
-  background-color: var(--color-slate-900);
+/* Atmospheric background — subtle medical-grade glow + grid */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 60% 50% at 8% 8%, rgba(34, 211, 238, 0.12), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 92% 12%, rgba(167, 139, 250, 0.10), transparent 60%),
+    radial-gradient(ellipse 90% 60% at 50% 110%, rgba(52, 211, 153, 0.08), transparent 60%),
+    radial-gradient(ellipse 120% 80% at 50% 50%, transparent 0%, var(--ink-950) 70%);
+  pointer-events: none;
 }
 
-* {
-  box-sizing: border-box;
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(120, 160, 220, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 160, 220, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: -1px -1px;
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 30%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 30%, #000 30%, transparent 80%);
+  pointer-events: none;
 }
 
-/* Reset some default styles */
-h1, h2, h3, h4, p { margin: 0; }
-button { background: none; border: none; cursor: pointer; padding: 0; font: inherit; color: inherit; }
-a { text-decoration: none; color: inherit; }
+/* Headings */
+h1, h2, h3, h4, h5, p { margin: 0; }
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--text-primary);
+}
 
-/* ── Chatbot animations ── */
+a { color: inherit; text-decoration: none; }
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Custom selection */
+::selection {
+  background: rgba(34, 211, 238, 0.30);
+  color: #fff;
+}
+
+/* Scrollbars (subtle) */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(120, 140, 180, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.30);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* =============================================================
+   Reusable atomic helpers
+   ============================================================= */
+
+.surface {
+  background: var(--bg-surface);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--line-medium);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.serif { font-family: var(--font-serif); }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* =============================================================
+   Keyframes
+   ============================================================= */
+
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-.animate-slideUp {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes drift {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-6px); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.45); }
+  50%      { box-shadow: 0 0 0 16px rgba(34, 211, 238, 0); }
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  20% { transform: scale(1.18); }
+  35% { transform: scale(0.95); }
+  50% { transform: scale(1.10); }
+  65% { transform: scale(0.98); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY( 100%); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-12px) rotate(2deg); }
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.25s ease-out forwards;
-}
+.animate-slideUp { animation: slideUp 0.45s var(--ease-out) forwards; }
+.animate-fadeIn  { animation: fadeIn  0.35s var(--ease-out) forwards; }
+.animate-heartbeat { animation: heartbeat 1.4s var(--ease-in-out) infinite; }

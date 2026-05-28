@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogIn, User, Lock, Mail, Calendar, Hash, Type } from 'lucide-react'
+import { User, Lock, Mail, Calendar, Hash, Type, ArrowRight, Activity, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import './Register.css'
 
@@ -13,34 +13,22 @@ export function Register() {
   const [dob, setDob] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
-    
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            username,
-            full_name: fullName,
-            gender,
-            dob
-          }
-        }
+        options: { data: { username, full_name: fullName, gender, dob } },
       })
-
-      if (error) {
-        setError(error.message)
-        return
-      }
-
-      navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng kiểm tra hộp thư Email để xác nhận tài khoản trước khi đăng nhập.' } })
+      if (error) { setError(error.message); return }
+      navigate('/login', {
+        state: { message: 'Đăng ký thành công! Vui lòng kiểm tra hộp thư Email để xác nhận tài khoản trước khi đăng nhập.' },
+      })
     } catch (err) {
       setError('Đã có lỗi xảy ra khi đăng ký')
     } finally {
@@ -49,90 +37,92 @@ export function Register() {
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h2>Tạo tài khoản</h2>
-          <p>Tham gia để lưu trữ và theo dõi sức khỏe của bạn</p>
-        </div>
-        
-        {error && <div className="auth-error">{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="input-group">
-            <User size={20} className="input-icon" />
-            <input 
-              type="text" 
-              placeholder="Tên người dùng" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+    <div className="auth">
+      <div className="auth__shell">
+        <aside className="auth__aside" aria-hidden="true">
+          <div className="auth__aside-inner">
+            <span className="auth__brand">
+              <Activity size={16} />
+              <span>NIHealth</span>
+            </span>
+            <p className="auth__quote serif">
+              “Một tài khoản — toàn bộ lịch sử nhịp tim của bạn, lưu lại để theo dõi tiến triển.”
+            </p>
+            <span className="auth__quote-author">— Personal vitals timeline</span>
+            <div className="auth__aside-stat">
+              <Sparkles size={14} />
+              <span>Free · End-to-end encrypted · GDPR</span>
+            </div>
           </div>
+          <div className="auth__aside-glow" />
+        </aside>
 
-          <div className="input-group">
-            <Type size={20} className="input-icon" />
-            <input 
-              type="text" 
-              placeholder="Họ và Tên" 
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-          </div>
+        <main className="auth__form-wrap">
+          <header className="auth__header">
+            <span className="auth__eyebrow">Create account</span>
+            <h2 className="auth__title">Tạo tài khoản</h2>
+            <p className="auth__sub">Tham gia để lưu trữ và theo dõi sức khỏe theo thời gian.</p>
+          </header>
 
-          <div className="input-row">
-            <div className="input-group half">
-              <Calendar size={20} className="input-icon" />
-              <input 
-                type="date" 
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                required
+          {error && <div className="auth__alert auth__alert--error">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="auth__form">
+            <Field icon={<User size={17} />}  label="Tên người dùng" value={username} onChange={setUsername} required />
+            <Field icon={<Type size={17} />}  label="Họ và Tên"      value={fullName} onChange={setFullName} required />
+
+            <div className="input-row">
+              <Field
+                icon={<Calendar size={17} />} label="Ngày sinh"
+                value={dob} onChange={setDob} type="date" required halfWidth
               />
+              <label className="field field--half">
+                <span className="field__icon"><Hash size={17} /></span>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="field__select"
+                  required
+                >
+                  <option value="nam">Nam</option>
+                  <option value="nu">Nữ</option>
+                  <option value="khac">Khác</option>
+                </select>
+                <span className="field__label field__label--static">Giới tính</span>
+              </label>
             </div>
-            
-            <div className="input-group half">
-              <Hash size={20} className="input-icon" />
-              <select value={gender} onChange={(e) => setGender(e.target.value)} required className="gender-select">
-                <option value="nam">Nam</option>
-                <option value="nu">Nữ</option>
-                <option value="khac">Khác</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="input-group">
-            <Mail size={20} className="input-icon" />
-            <input 
-              type="email" 
-              placeholder="Email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="input-group">
-            <Lock size={20} className="input-icon" />
-            <input 
-              type="password" 
-              placeholder="Mật khẩu" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          
-          <button type="submit" className="auth-button" disabled={isLoading}>
-            {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
-          </button>
-        </form>
-        
-        <div className="auth-footer">
-          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
-        </div>
+
+            <Field icon={<Mail size={17} />} label="Email" value={email}    onChange={setEmail}    type="email"    required />
+            <Field icon={<Lock size={17} />} label="Mật khẩu" value={password} onChange={setPassword} type="password" required />
+
+            <button type="submit" className="auth__submit" disabled={isLoading}>
+              <span>{isLoading ? 'Đang đăng ký…' : 'Đăng ký'}</span>
+              <ArrowRight size={16} />
+            </button>
+          </form>
+
+          <footer className="auth__footer">
+            Đã có tài khoản?{' '}
+            <Link to="/login" className="auth__link">Đăng nhập</Link>
+          </footer>
+        </main>
       </div>
     </div>
+  )
+}
+
+function Field({ icon, label, value, onChange, type = 'text', required, halfWidth }) {
+  return (
+    <label className={`field${halfWidth ? ' field--half' : ''}`}>
+      <span className="field__icon">{icon}</span>
+      <input
+        className="field__input"
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        placeholder=" "
+      />
+      <span className="field__label">{label}</span>
+    </label>
   )
 }

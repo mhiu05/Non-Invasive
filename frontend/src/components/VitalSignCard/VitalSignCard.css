@@ -1,78 +1,126 @@
-.vital-card {
-  display: flex;
+.vcard {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 0.75rem;
-  border-radius: 0.75rem;
-  padding: 1rem;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.75), rgba(8, 12, 22, 0.85));
+  border: 1px solid var(--line-medium);
+  overflow: hidden;
+  transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
 }
 
-.vital-icon {
-  flex-shrink: 0;
+.vcard:hover {
+  transform: translateY(-2px);
+  border-color: currentColor;
 }
 
-.vital-content {
+.vcard__glow {
+  position: absolute;
+  inset: -40% -40% 30% -40%;
+  background: radial-gradient(ellipse, currentColor, transparent 70%);
+  opacity: 0.18;
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.vcard__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: currentColor;
+  color: var(--ink-925);
+  box-shadow: 0 0 16px currentColor;
+  position: relative;
+  z-index: 1;
+}
+
+.vcard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: relative;
+  z-index: 1;
   min-width: 0;
 }
 
-.vital-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-slate-500);
+.vcard__label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-:root.dark .vital-label {
-  color: var(--color-slate-400);
+.vcard__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--text-primary);
 }
 
-.vital-value {
-  font-size: 1.5rem;
+.vcard__num {
+  font-family: var(--font-display);
   font-weight: 700;
-  line-height: 1.25;
+  font-size: 1.85rem;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: currentColor;
+  font-variant-numeric: tabular-nums;
 }
 
-.vital-unit {
-  margin-left: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: var(--color-slate-500);
+.vcard__unit {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.vital-detecting {
-  font-size: 0.875rem;
-  color: var(--color-slate-400);
-  animation: pulse_slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.vcard__detecting {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
 }
 
-@keyframes pulse_slow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .5; }
+.vcard__detecting-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulseDot 1.4s var(--ease-in-out) infinite;
 }
 
-/* Colors */
-/* Red */
-.vital-card-red { background-color: #fef2f2; }
-:root.dark .vital-card-red { background-color: rgba(127, 29, 29, 0.2); }
-.vital-text-red { color: var(--color-red-600); }
-:root.dark .vital-text-red { color: var(--color-red-400); }
-.vital-icon-red { color: var(--color-red-500); }
+/* Mini waveform decoration */
+.vcard__decor {
+  width: 64px;
+  height: 22px;
+  display: block;
+  color: currentColor;
+  opacity: 0.55;
+  position: relative;
+  z-index: 1;
+}
 
-/* Blue */
-.vital-card-blue { background-color: var(--color-blue-50); }
-:root.dark .vital-card-blue { background-color: rgba(30, 58, 138, 0.2); }
-.vital-text-blue { color: var(--color-blue-600); }
-:root.dark .vital-text-blue { color: var(--color-blue-400); }
-.vital-icon-blue { color: var(--color-blue-500); }
+.vcard__decor svg { width: 100%; height: 100%; display: block; }
 
-/* Green */
-.vital-card-green { background-color: #f0fdf4; }
-:root.dark .vital-card-green { background-color: rgba(20, 83, 45, 0.2); }
-.vital-text-green { color: #16a34a; }
-:root.dark .vital-text-green { color: #4ade80; }
-.vital-icon-green { color: var(--color-green-500); }
+/* ── Color variants ─────────────────────────────────── */
+.vcard--cyan    { color: var(--cyan-400); }
+.vcard--crimson { color: var(--crimson-500); }
+.vcard--violet  { color: var(--violet-400); }
+.vcard--mint    { color: var(--mint-400); }
 
-/* Purple */
-.vital-card-purple { background-color: #faf5ff; }
-:root.dark .vital-card-purple { background-color: rgba(88, 28, 135, 0.2); }
-.vital-text-purple { color: #9333ea; }
-:root.dark .vital-text-purple { color: #c084fc; }
-.vital-icon-purple { color: #a855f7; }
+/* Legacy color aliases (keep backwards compat with Upload/Profile uses) */
+.vcard--red    { color: var(--crimson-500); }
+.vcard--green  { color: var(--mint-400); }
+.vcard--blue   { color: var(--cyan-400); }
+.vcard--purple { color: var(--violet-400); }
