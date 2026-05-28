@@ -43,10 +43,10 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--text-secondary);
-  background: rgba(34, 211, 238, 0.08);
+  background: rgba(6, 182, 212, 0.08);
   padding: 0.35rem 0.7rem 0.35rem 0.55rem;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(34, 211, 238, 0.20);
+  border: 1px solid rgba(6, 182, 212, 0.20);
 }
 
 .hero__eyebrow-dot {
@@ -157,14 +157,14 @@
 .btn:hover .btn__arrow { transform: translateX(3px); }
 
 .btn--ghost {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(15, 23, 42, 0.04);
   color: var(--text-primary);
   border-color: var(--line-medium);
   backdrop-filter: blur(6px);
 }
 
 .btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.08);
   border-color: var(--line-strong);
   transform: translateY(-2px);
 }
@@ -226,8 +226,8 @@
   position: absolute;
   inset: -10% -10% 0 -10%;
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(34, 211, 238, 0.30), transparent 55%),
-    radial-gradient(ellipse at 80% 80%, rgba(167, 139, 250, 0.25), transparent 55%);
+    radial-gradient(ellipse at 30% 20%, rgba(6, 182, 212, 0.20), transparent 55%),
+    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15), transparent 55%);
   z-index: -1;
   filter: blur(40px);
   border-radius: 50%;
@@ -241,7 +241,7 @@
   padding: 1.25rem;
   border-radius: var(--radius-xl);
   background:
-    linear-gradient(160deg, rgba(20, 30, 55, 0.85), rgba(8, 12, 22, 0.85));
+    linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75));
   border: 1px solid var(--line-medium);
   box-shadow: var(--shadow-elev);
   backdrop-filter: blur(20px);
@@ -253,7 +253,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, transparent 60%, rgba(34, 211, 238, 0.10));
+  background: linear-gradient(180deg, transparent 60%, rgba(6, 182, 212, 0.05));
   pointer-events: none;
 }
 
@@ -352,7 +352,7 @@
   gap: 0.15rem;
   padding: 0.55rem 0.6rem;
   border-radius: var(--radius-md);
-  background: rgba(15, 22, 38, 0.6);
+  background: rgba(255, 255, 255, 0.6);
   border: 1px solid var(--line-soft);
 }
 
@@ -432,7 +432,7 @@
   gap: 1rem;
   padding: 1.5rem 1.4rem 1.7rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(165deg, rgba(20, 30, 55, 0.70), rgba(8, 12, 22, 0.85));
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.70));
   border: 1px solid var(--line-medium);
   overflow: hidden;
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
@@ -530,14 +530,14 @@
   padding: 0.25rem 0.55rem;
   border-radius: var(--radius-pill);
   border: 1px solid var(--line-soft);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.04);
 }
 
 /* ═════════════════════ WORKFLOW ═════════════════════ */
 .workflow {
   padding: 2.5rem 1.5rem 3rem;
   border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(15, 22, 38, 0.5), rgba(8, 12, 22, 0.3));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
   border: 1px solid var(--line-soft);
   position: relative;
   overflow: hidden;
@@ -572,7 +572,7 @@
   gap: 0.6rem;
   padding: 1.4rem 1.2rem;
   border-radius: var(--radius-lg);
-  background: rgba(8, 12, 22, 0.6);
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid var(--line-medium);
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
 }
@@ -636,7 +636,7 @@
   gap: 0.7rem;
   padding: 1.3rem;
   border-radius: var(--radius-lg);
-  background: rgba(15, 22, 38, 0.6);
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid var(--line-medium);
   border-left-width: 3px;
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
@@ -707,7 +707,7 @@
   gap: 1rem;
   padding: 1rem 1.2rem;
   border-radius: var(--radius-lg);
-  background: rgba(15, 22, 38, 0.55);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid var(--line-medium);
   color: var(--text-primary);
   transition: transform 0.25s var(--ease-out), border-color 0.25s var(--ease-out), background 0.25s var(--ease-out);
@@ -715,8 +715,8 @@
 
 .contact__item:hover {
   transform: translateY(-2px);
-  border-color: rgba(34, 211, 238, 0.50);
-  background: rgba(15, 30, 50, 0.7);
+  border-color: rgba(6, 182, 212, 0.40);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .contact__icon {

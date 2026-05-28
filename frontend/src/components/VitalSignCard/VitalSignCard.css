@@ -6,7 +6,7 @@
   gap: 1rem;
   padding: 1rem 1.1rem;
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(15, 22, 38, 0.75), rgba(8, 12, 22, 0.85));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
   border: 1px solid var(--line-medium);
   overflow: hidden;
   transition: transform 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
