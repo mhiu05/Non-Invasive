@@ -13,7 +13,71 @@ Hệ thống đo sinh trắc học không xâm lấn từ video khuôn mặt —
 
 ## 🏗 Kiến trúc hệ thống
 
-![Architecture](.figures/architecture.png)
+```mermaid
+graph TD
+    %% Frontend
+    subgraph Frontend [Client - React/Vite]
+        UI[Web UI]
+        Webcam[Webcam Realtime]
+        Uploader[Video Uploader]
+        ChatWidget[AI Chatbot]
+    end
+
+    %% Backend API
+    subgraph Backend [Backend - FastAPI]
+        API[API Router]
+        WS[WebSocket Manager]
+        Auth[JWT Auth Middleware]
+    end
+
+    %% rPPG Core
+    subgraph AI_Core [rPPG Engine - ONNX]
+        FaceMesh[MediaPipe Face Detector]
+        Model[FactorizePhys Model]
+        DSP[Signal Processor - FFT/Bandpass]
+    end
+
+    %% Background Processing
+    subgraph Worker [Async Processing]
+        Celery[Celery Worker]
+        Redis[(Redis Message Broker)]
+    end
+
+    %% Chatbot RAG
+    subgraph RAG [Chatbot RAG System]
+        Engine[RAG Engine]
+        FAISS[(FAISS Vectorstore)]
+        Gemini[Google Gemini 1.5 Flash]
+    end
+
+    %% Supabase Cloud
+    subgraph Cloud [Supabase Cloud]
+        DB[(PostgreSQL DB)]
+        Storage[(S3 Object Storage)]
+    end
+
+    %% Connections
+    UI <-->|JWT Auth| Auth
+    Webcam <-->|Stream frames| WS
+    Uploader -->|Upload Video| API
+    ChatWidget <-->|Ask Question| API
+
+    API <--> Auth
+    API -->|Create Async Job| Redis
+    Redis -->|Dispatch Task| Celery
+
+    WS --> FaceMesh
+    Celery -->|Download Video| Storage
+    Celery --> FaceMesh
+
+    FaceMesh --> Model
+    Model --> DSP
+    DSP -->|Save Results| DB
+
+    API --> Engine
+    Engine <--> FAISS
+    Engine <--> Gemini
+```
 
 Hệ thống được thiết kế với 4 phân lớp chính:
 - **Computer Vision & rPPG**: Sử dụng MediaPipe cho Face Mesh, kết hợp ONNX Runtime chạy mô hình học sâu rPPG tiên tiến (FactorizePhys).
