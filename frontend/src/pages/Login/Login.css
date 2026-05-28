@@ -96,7 +96,7 @@
   color: var(--text-primary);
   letter-spacing: -0.01em;
   max-width: 26rem;
-  font-style: italic;
+  font-style: normal;
 }
 
 .auth__quote-author {

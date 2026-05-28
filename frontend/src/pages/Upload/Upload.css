@@ -28,10 +28,7 @@
 }
 
 .upload__title em {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--cyan-300);
+  font-style: normal;
 }
 
 .upload__sub {

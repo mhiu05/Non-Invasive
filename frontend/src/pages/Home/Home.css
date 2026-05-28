@@ -68,11 +68,7 @@
 }
 
 .hero__title-italic {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--cyan-300);
-  letter-spacing: -0.015em;
+  /* Inherit from parent hero__title */
 }
 
 .hero__title-flash {
@@ -402,10 +398,7 @@
 }
 
 .section__title em {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--cyan-300);
+  font-style: normal;
 }
 
 .section__sub {
@@ -790,10 +783,5 @@
 }
 
 .footer .serif {
-  font-family: var(--font-serif);
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 0.95rem;
-  font-style: italic;
-  color: var(--cyan-300);
+  font-style: normal;
 }
