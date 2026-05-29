@@ -1,6 +1,7 @@
 import { Activity, Home, Upload, Video, LogIn, UserPlus, User as UserIcon, LogOut } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthProvider'
+import ViewCounter from '@/components/ViewCounter/ViewCounter'
 import './Header.css'
 
 // Thanh điều hướng (Header) hiển thị logo và các tab điều hướng chính
@@ -39,6 +40,8 @@ export function Header() {
 
         {/* Các tab điều hướng */}
         <nav className="nav">
+          <ViewCounter />
+          <span className="nav__divider" aria-hidden="true" />
           {navLink('/',       <Home size={15} />,   'Trang chủ')}
           {navLink('/live',   <Video size={15} />,  'Đo Live')}
           {navLink('/upload', <Upload size={15} />, 'Upload')}
