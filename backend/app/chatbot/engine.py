@@ -138,11 +138,9 @@ def get_rag_chain():
 
         _rag_llm = _build_gemini_llm()
         
-        # Query Rewriting
-        retriever = MultiQueryRetriever.from_llm(
-            retriever=retriever,
-            llm=_rag_llm
-        )
+        # Disabled MultiQueryRetriever because Gemini 2.5 often returns markdown or conversational filler 
+        # that breaks the LineListOutputParser, resulting in 0 retrieved documents.
+        # retriever = MultiQueryRetriever.from_llm(retriever=retriever, llm=_rag_llm)
         
         # Disabled Re-ranking to save RAM (avoids OOM on Render Free tier / Vercel)
         # and to speed up response time.
