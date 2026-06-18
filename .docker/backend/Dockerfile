@@ -23,6 +23,7 @@ COPY --from=builder /install /usr/local
 # Copy application code (from the context root which is d:/New folder/Non-Invasive)
 COPY backend/app/ ./app/
 COPY backend/weights/ ./weights/
+COPY backend/vectorstore/ ./vectorstore/
 
 # Create a non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser && \

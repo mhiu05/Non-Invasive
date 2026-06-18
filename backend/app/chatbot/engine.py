@@ -10,6 +10,9 @@ Fallback strategy:
   3. Response includes `from_internal_docs` so the frontend can show the source.
 """
 
+import os
+os.environ["HF_HOME"] = "/tmp/huggingface"
+
 import logging
 from typing import Any, List
 
@@ -141,16 +144,8 @@ def get_rag_chain():
             llm=_rag_llm
         )
         
-        # Re-ranking
-        try:
-            model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
-            compressor = CrossEncoderReranker(model=model, top_n=5)
-            retriever = ContextualCompressionRetriever(
-                base_compressor=compressor,
-                base_retriever=retriever
-            )
-        except Exception as e:
-            logger.warning(f"Could not load re-ranker: {e}")
+        # Disabled Re-ranking to save RAM (avoids OOM on Render Free tier / Vercel)
+        # and to speed up response time.
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", SYSTEM_PROMPT),
