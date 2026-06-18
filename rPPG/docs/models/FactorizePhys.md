@@ -1,7 +1,6 @@
 # FactorizePhys
 
 > **FactorizePhys: Matrix Factorization for Multidimensional Attention in Remote Physiological Sensing**
-> Joshi, Agaian, Cho — NeurIPS 2024
 
 3D CNN backbone + **FSAM (Factorized Self-Attention Module)** dùng
 Non-negative Matrix Factorization (NMF) thay self-attention quadratic.
@@ -16,37 +15,25 @@ Model **siêu nhẹ** (~220 K params) nhưng accuracy ngang với model lớn h�
 
 ## Kiến trúc
 
-```mermaid
-flowchart TD
-    IN["Input (N, 3, T+1, 72, 72)<br/>raw frames"]
-
-    IN --> EXT[rPPG_FeatureExtractor<br/>nhiều ConvBlock3D]
-
-    EXT --> FSAM["FSAM (FeaturesFactorizationModule)<br/>NMF rank-R attention"]
-    FSAM --> HEAD[BVP_Head<br/>output projection]
-    HEAD --> OUT["1-D rPPG (N, T)"]
-
-    style FSAM fill:#ffcccc
-```
+1. **Input**: Raw video frames (kích thước: `N, 3, T+1, 72, 72`).
+2. **Feature Extractor**: Các khung hình đi qua bộ trích xuất đặc trưng `rPPG_FeatureExtractor` (gồm nhiều khối ConvBlock3D).
+3. **Attention Module (FSAM)**: Đặc trưng được đưa vào khối FSAM (`FeaturesFactorizationModule`). Tại đây, mô hình dùng thuật toán phân rã ma trận NMF (Non-negative Matrix Factorization) để tính toán attention với độ phức tạp thấp.
+4. **Output Head**: Khối `BVP_Head` nhận các đặc trưng đã qua attention và chiếu (project) thành tín hiệu 1 chiều.
+5. **Output**: Kết quả cuối cùng là tín hiệu rPPG dự đoán có kích thước `(N, T)`.
 
 ## FSAM — NMF Attention
 
 Đây là phần "magic" của model:
 
-```mermaid
-flowchart LR
-    F["Features (N, C, T, H, W)<br/>flatten thành (B, D, HW·T)"]
-    F --> B["Bases (B, D, R)<br/>learned initialization"]
-    F --> C["Coefficients (B, R, HW·T)<br/>learned"]
+Quá trình xử lý bên trong module FSAM:
 
-    B --> MULT["Reconstruct:<br/>F̂ = B · C"]
-    C --> MULT
-    MULT --> ITER{Iterative<br/>multiplicative update<br/>k steps}
-    ITER -.->|update B| B
-    ITER -.->|update C| C
-    ITER --> RES[Residual: x = x + λ · (F̂ - F)]
-    RES --> OUT[Output features]
-```
+1. **Chuẩn bị dữ liệu**: Các đặc trưng `F` từ bước trước (có kích thước `N, C, T, H, W`) được dàn phẳng (flatten) thành ma trận 2 chiều có kích thước `(B, D, HW·T)`.
+2. **Khởi tạo**: Phân rã ma trận `F` thành 2 phần: Ma trận cơ sở **B** (`Bases`) và Ma trận hệ số **C** (`Coefficients`).
+3. **Lặp tối ưu hóa (Iterative update)**: Lặp lại quá trình sau `k` bước:
+   - Cập nhật ma trận **B** và **C**.
+   - Tái tạo lại ma trận đặc trưng xấp xỉ: `F̂ = B · C`.
+4. **Cộng Residual**: Tính sự khác biệt (sai số) giữa ma trận tái tạo và ma trận gốc `(F̂ - F)`, sau đó cộng phần residual này vào lại dữ liệu gốc `x = x + λ · (F̂ - F)`.
+5. **Output**: Trả về các đặc trưng đã được tối ưu hóa sự chú ý.
 
 **NMF update rules** (multiplicative, đảm bảo bases/coef không âm):
 ```
