@@ -7,11 +7,18 @@ Responsibilities:
 """
 
 import os
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 class Settings(BaseSettings):
+    @field_validator("chatbot_model", "chatbot_model_fallback", mode="before")
+    @classmethod
+    def correct_deprecated_models(cls, v: str) -> str:
+        if isinstance(v, str) and ("latest" in v or "1.5" in v):
+            return "gemini-2.5-pro" if "pro" in v else "gemini-2.5-flash"
+        return v
     model_config = SettingsConfigDict(env_file=os.path.join(_backend_dir, ".env"), env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "Non-Invasive Health API"
