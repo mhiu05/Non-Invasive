@@ -30,8 +30,8 @@ class Settings(BaseSettings):
 
     # Chatbot
     gemini_api_key: str = ""
-    chatbot_model: str = "gemini-1.5-flash"
-    chatbot_model_fallback: str = "gemini-1.5-pro"
+    chatbot_model: str = "gemini-2.5-flash"
+    chatbot_model_fallback: str = "gemini-2.5-pro"
 
     # Redis & Celery
     redis_url: str = "redis://redis:6379/0"
