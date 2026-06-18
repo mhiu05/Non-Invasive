@@ -7,7 +7,7 @@ import { BVPChart } from '@/components/BVPChart/BVPChart'
 import { VitalSignCard } from '@/components/VitalSignCard/VitalSignCard'
 import { SnrBadge } from '@/components/SnrBadge/SnrBadge'
 import { HistoryView } from '@/components/HistoryView/HistoryView'
-import { uploadVideoAsync, getJobStatus } from '@/lib/api'
+import { uploadVideo, getJobStatus } from '@/lib/api'
 import { downloadCSV } from '@/lib/utils'
 import { getSnrQuality } from '@/lib/vitals'
 import './Upload.css'
@@ -33,24 +33,18 @@ export function Upload() {
     setState('uploading'); setProgress(0); setResult(null); setErrMsg(''); setJobId(null)
 
     try {
-      const job = await uploadVideoAsync(file, age, setProgress)
-      setJobId(job.job_id)
-      setState('processing')
-
-      const poll = setInterval(async () => {
-        try {
-          const status = await getJobStatus(job.job_id)
-          if (status.status === 'done' && status.result) {
-            clearInterval(poll); setResult(status.result); setState('done')
-          } else if (status.status === 'failed') {
-            clearInterval(poll); setErrMsg(status.error || 'Xử lý video thất bại'); setState('error')
-          }
-        } catch {
-          clearInterval(poll); setErrMsg('Mất kết nối khi kiểm tra trạng thái'); setState('error')
+      const handleProgress = (pct) => {
+        setProgress(pct)
+        if (pct >= 100) {
+          setState('processing')
         }
-      }, 2000)
+      }
+      
+      const resultData = await uploadVideo(file, age, handleProgress)
+      setResult(resultData)
+      setState('done')
     } catch (e) {
-      setErrMsg(e instanceof Error ? e.message : 'Upload thất bại')
+      setErrMsg(e instanceof Error ? e.message : (e?.response?.data?.detail || 'Upload thất bại'))
       setState('error')
     }
   }, [age])
