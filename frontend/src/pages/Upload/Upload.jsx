@@ -7,7 +7,7 @@ import { BVPChart } from '@/components/BVPChart/BVPChart'
 import { VitalSignCard } from '@/components/VitalSignCard/VitalSignCard'
 import { SnrBadge } from '@/components/SnrBadge/SnrBadge'
 import { HistoryView } from '@/components/HistoryView/HistoryView'
-import { uploadVideo, getJobStatus } from '@/lib/api'
+import { uploadVideoAsync, getJobStatus } from '@/lib/api'
 import { downloadCSV } from '@/lib/utils'
 import { getSnrQuality } from '@/lib/vitals'
 import './Upload.css'
@@ -40,9 +40,28 @@ export function Upload() {
         }
       }
       
-      const resultData = await uploadVideo(file, age, handleProgress)
-      setResult(resultData)
-      setState('done')
+      const job = await uploadVideoAsync(file, age, handleProgress)
+      setJobId(job.job_id)
+
+      const interval = setInterval(async () => {
+        try {
+          const status = await getJobStatus(job.job_id)
+          if (status.status === 'done') {
+            clearInterval(interval)
+            setResult(status.result)
+            setState('done')
+          } else if (status.status === 'failed') {
+            clearInterval(interval)
+            setErrMsg(status.error || 'Lỗi khi xử lý video (Worker ngầm)')
+            setState('error')
+          }
+        } catch (err) {
+          clearInterval(interval)
+          setErrMsg('Lỗi kết nối khi lấy trạng thái: ' + err.message)
+          setState('error')
+        }
+      }, 2000)
+
     } catch (e) {
       setErrMsg(e instanceof Error ? e.message : (e?.response?.data?.detail || 'Upload thất bại'))
       setState('error')
